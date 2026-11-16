@@ -1,60 +1,32 @@
 # Releasing
 
-1. Commit pending work, bring main up to date with origin, and run `go test ./internal/...`. Others push to main too, so a release cut from a stale main leaves out their work:
+GitHub holds only the source. There are no GitHub releases, no release builds in Actions and no `v*` tags on the remote: a new version is built and installed on your own machine.
+
+1. Commit pending work, bring main up to date with origin, and run `go test ./internal/...`. Others push to main too, so a version cut from a stale main leaves out their work:
 
    ```bash
    git pull --rebase origin main
    ```
 
-2. Bump `version` in `mygo.json`, and add a `## 0.1.8` section at the top of `CHANGELOG.md` saying, in Chinese, what changed for people using the app since the last release (`git log v0.1.7..HEAD`, after the pull). Commit both in a commit titled just the version, e.g. `0.1.8`. MyGo's updater shows that section in the app's update window, and the release page takes it as its notes; `mygo build` fails without one.
-3. Push main first, and tag only once that push has gone through. Pushing both at once still pushes the tag when main is rejected, and the tag starts a release build of a commit that isn't on main:
+2. Bump `version` in `mygo.json`, and add a `## 0.1.27` section at the top of `CHANGELOG.md` saying, in Chinese, what changed for people using the app since the last version. Commit both in a commit titled just the version, e.g. `0.1.27`, and push main. `mygo build` fails without the changelog section.
+
+3. Build. On Linux, fetch the tray libraries first, or the app ships without them and has no tray icon where the system lacks them (SteamOS):
 
    ```bash
-   git push origin main
-   git tag v0.1.8
-   git push origin v0.1.8
+   sh scripts/tray-libs.sh
+   go tool mygo build -platform linux/amd64
    ```
 
-   If main is rejected, pull again, add what came in to the changelog, amend the version commit, test, and push main again before tagging. If a tag went up on the wrong commit anyway, cancel its run, then delete the tag and the draft it made before tagging again:
+4. Install the archive it made, into `~/.local/mygo-cloudmusic.app` with its entry in the applications menu:
 
    ```bash
-   git push origin :refs/tags/v0.1.8
-   gh release delete v0.1.8 --yes
+   sh build/linux-amd64/install.sh build/linux-amd64/mygo-cloudmusic-0.1.27-linux-amd64.tar.gz
    ```
 
-4. `.github/workflows/release.yml` builds Windows and Linux and uploads them to a draft release. Wait for every job to pass:
+   Quit the running app first, then open it from the menu and check 设置 → 更新 shows the new version.
 
-   ```bash
-   gh run watch "$(gh run list --workflow release.yml -L1 --json databaseId -q '.[0].databaseId')" --exit-status
-   ```
-
-   If a job fails, don't publish; fix it first.
-
-5. Publish the draft and mark it latest:
-
-   ```bash
-   gh release edit v0.1.8 --draft=false --latest
-   ```
-
-6. Check the update feed shows the new version:
-
-   ```bash
-   curl -sL https://github.com/soarchen2k/mygo-cloudmusic/releases/latest/download/update-linux-amd64.json
-   ```
-
-7. Deploy the website. It reads the latest release when it's prerendered, so it has to be rebuilt after publishing:
-
-   ```bash
-   cd website && bun run deploy
-   ```
-
-   Then check that the site's /download/ page, at the URL `bun run deploy` prints, shows the new version.
+The app's updater, the install command on the website and the website's download page all look for the latest GitHub release, of which there is none: they find nothing to update to or download.
 
 ## The speech recognition libraries
 
-Podcast captions run sherpa-onnx, whose libraries the app downloads with the model from the `sherpa-onnx-<version>` release, not from the app's own. They only change with sherpa-onnx's version, in `scripts/sherpa`. Then pack them again, commit the `internal/speech/natives.go` it writes, and upload them as a prerelease, which never becomes the latest that updates look for:
-
-```bash
-go run ./scripts/sherpa
-gh release create sherpa-onnx-2.0.1 --prerelease --latest=false build/sherpa/*
-```
+Podcast captions run sherpa-onnx, whose libraries the app downloads with the model from the `sherpa-onnx-<version>` release. With no releases on the remote that download has nowhere to come from. `go run ./scripts/sherpa` still packs them into `build/sherpa` and writes `internal/speech/natives.go` when sherpa-onnx's version changes in `scripts/sherpa`.
