@@ -680,13 +680,48 @@ func (p *Player) loadSkipping(at, skipped int, play bool, from time.Duration) {
 	}()
 }
 
+// songURL asks NetEase where a track streams from: tests swap it.
+var songURL = netease.SongURL
+
+// Asking where a song streams from, or fetching it, fails now and then for
+// a moment: a request times out, a connection is reset, a server answers
+// 5xx. It is asked again, retries times, waiting retryWait, then twice as
+// long each time, before the song is taken for one that cannot play, which
+// the queue skips. A song that truly cannot play, as one for VIPs or with
+// no address, is skipped at once.
+var (
+	retries   = 3
+	retryWait = time.Second
+)
+
+// backoff is how long to wait before trying again after try failures.
+func backoff(try int) time.Duration { return retryWait << try }
+
+// lasting reports whether err says a song cannot play, however often it
+// is asked for, rather than that the network failed for a moment.
+func lasting(err error) bool {
+	return errors.Is(err, netease.ErrUnavailable) || errors.Is(err, netease.ErrUnsupported)
+}
+
+// streamOf asks where track id streams from at level, again after
+// failures that pass.
+func streamOf(id int64, level string) (*netease.Stream, error) {
+	for try := 0; ; try++ {
+		info, err := songURL(id, level)
+		if err == nil || lasting(err) || try >= retries {
+			return info, err
+		}
+		time.Sleep(backoff(try))
+	}
+}
+
 // open opens track t's audio at level: kept in the cache, or else
 // streamed into it, and kept once it has all come in.
 func (p *Player) open(t netease.Track, level string) (*netease.Stream, stream, error) {
 	dl, info, ok := p.Cache.lookup(t.ID, level)
 	if !ok {
 		var err error
-		info, err = netease.SongURL(t.ID, level)
+		info, err = streamOf(t.ID, level)
 		if err != nil {
 			return nil, nil, err
 		}

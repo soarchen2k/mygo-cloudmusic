@@ -386,6 +386,9 @@ func ArtistLatestSongs(id int64, limit int) ([]Track, error) {
 
 var ErrUnavailable = errors.New("this song isn't available to stream")
 
+// ErrUnsupported is a song streamed in a format the player does not play.
+var ErrUnsupported = errors.New("unsupported format")
+
 // Stream is where a track streams from, and what it is.
 type Stream struct {
 	URL  string `json:"-"`
@@ -428,6 +431,11 @@ func SongURL(id int64, level string) (*Stream, error) {
 	if err := eapiPost("/api/song/enhance/player/url/v1", data, &res); err != nil {
 		return nil, err
 	}
+	// NetEase failing the request, as when it asks for fewer, says nothing
+	// of the song: it may well play once asked again.
+	if res.Code != 0 && res.Code != 200 {
+		return nil, fmt.Errorf("netease: song url: code %d", res.Code)
+	}
 	if len(res.Data) == 0 || res.Data[0].URL == "" {
 		return nil, ErrUnavailable
 	}
@@ -439,7 +447,7 @@ func SongURL(id int64, level string) (*Stream, error) {
 	s := d.Stream
 	s.Type = strings.ToLower(s.Type)
 	if s.Type != "" && s.Type != "mp3" && s.Type != "flac" {
-		return nil, fmt.Errorf("unsupported format %s", s.Type)
+		return nil, fmt.Errorf("%w %s", ErrUnsupported, s.Type)
 	}
 	if d.Peak != nil {
 		s.Peak = *d.Peak

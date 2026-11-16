@@ -5,12 +5,14 @@ import (
 	"context"
 	"encoding/binary"
 	"errors"
+	"fmt"
 	"io"
 	"math"
 	"math/cmplx"
 	"net/http"
 	"os"
 	"sync"
+	"time"
 
 	"github.com/egoist/mygo/audio"
 	gomp3 "github.com/hajimehoshi/go-mp3"
@@ -83,47 +85,95 @@ func opened(f *os.File, size int64) *download {
 	return d
 }
 
+// stallTimeout is how long a download waits for its next bytes before it
+// takes the connection for dead, and asks again.
+var stallTimeout = 20 * time.Second
+
 func (d *download) run(ctx context.Context, url string) {
 	defer d.release()
-	finish := func(err error) {
-		d.mu.Lock()
-		d.done, d.err = true, err
-		d.cond.Broadcast()
-		d.mu.Unlock()
+	var err error
+	for fails := 0; ; fails++ {
+		had := d.n
+		var again bool
+		again, err = d.fetch(ctx, url)
+		if err == nil || !again || ctx.Err() != nil {
+			break
+		}
+		// Bytes came in before it failed: the network works, if not well,
+		// and the song is not yet given up on.
+		if d.n > had {
+			fails = 0
+		}
+		if fails >= retries {
+			break
+		}
+		select {
+		case <-ctx.Done():
+		case <-time.After(backoff(fails)):
+		}
 	}
+	if err == nil && d.part != "" && (d.size <= 0 || d.n == d.size) {
+		// Whole if as long as promised: the cache's.
+		d.hand()
+	}
+	d.mu.Lock()
+	d.done, d.err = true, err
+	d.cond.Broadcast()
+	d.mu.Unlock()
+}
+
+// fetch fetches the rest of the song from url, from the bytes in so far.
+// Failing, it says whether to try again: when the network failed, rather
+// than the song being gone.
+func (d *download) fetch(ctx context.Context, url string) (again bool, err error) {
+	from := d.n
+	if d.size > 0 && from >= d.size {
+		return false, nil
+	}
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+	// A connection that goes quiet, before it answers or midway, is cut
+	// off, to ask again: it might keep the song waiting for good.
+	stall := time.AfterFunc(stallTimeout, cancel)
+	defer stall.Stop()
 	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 	if err != nil {
-		finish(err)
-		return
+		return false, err
 	}
 	req.Header.Set("User-Agent", netease.UserAgent)
+	if from > 0 {
+		req.Header.Set("Range", fmt.Sprintf("bytes=%d-", from))
+	}
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
-		finish(err)
-		return
+		return true, err
 	}
 	defer res.Body.Close()
-	if res.StatusCode != http.StatusOK {
-		finish(errors.New(res.Status))
-		return
+	switch {
+	case res.StatusCode == http.StatusPartialContent && from > 0:
+	case res.StatusCode == http.StatusOK:
+		// The whole song again, from a server that sends no ranges: what is
+		// in already is dropped.
+		if _, err := io.CopyN(io.Discard, res.Body, from); err != nil {
+			return true, err
+		}
+	default:
+		err := errors.New(res.Status)
+		return res.StatusCode >= 500 || res.StatusCode == http.StatusTooManyRequests ||
+			res.StatusCode == http.StatusRequestTimeout, err
 	}
 	buf := make([]byte, 64<<10)
 	for {
 		n, err := res.Body.Read(buf)
 		if n > 0 {
+			stall.Reset(stallTimeout)
 			d.write(buf[:n])
 		}
 		if err == io.EOF {
-			// Whole if as long as promised: the cache's.
-			if d.part != "" && (d.size <= 0 || d.n == d.size) {
-				d.hand()
-			}
-			finish(nil)
-			return
+			return false, nil
 		}
 		if err != nil {
-			finish(err)
-			return
+			return true, err
 		}
 	}
 }

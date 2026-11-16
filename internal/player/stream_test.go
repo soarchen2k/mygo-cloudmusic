@@ -1,12 +1,16 @@
 package player
 
 import (
+	"bytes"
+	"context"
 	"math"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strconv"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -335,5 +339,90 @@ func TestStreamSizeIsNotTrusted(t *testing.T) {
 	dl.mu.Unlock()
 	if n > maxPrealloc {
 		t.Errorf("set aside %d bytes", n)
+	}
+}
+
+// A song the network fails for a moment, as asked where it streams from
+// and as it streams, still plays, whole: before, a request that timed out,
+// a server answering 503 or a connection cut midway made the queue skip a
+// song that played fine when tried again, or cut it short.
+func TestNetworkHiccupsDoNotSkip(t *testing.T) {
+	b, err := os.ReadFile("testdata/seek.mp3")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var reqs atomic.Int32
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch reqs.Add(1) {
+		case 1:
+			http.Error(w, "busy", http.StatusServiceUnavailable)
+		case 2:
+			// Cut off halfway.
+			w.Header().Set("Content-Length", strconv.Itoa(len(b)))
+			w.Write(b[:len(b)/2])
+			w.(http.Flusher).Flush()
+			panic(http.ErrAbortHandler)
+		case 3:
+			// Never answers.
+			<-r.Context().Done()
+		default:
+			http.ServeContent(w, r, "", time.Time{}, bytes.NewReader(b))
+		}
+	}))
+	defer srv.Close()
+	defer func(wait, stall time.Duration, ask func(int64, string) (*netease.Stream, error)) {
+		retryWait, stallTimeout, songURL = wait, stall, ask
+	}(retryWait, stallTimeout, songURL)
+	retryWait, stallTimeout = time.Millisecond, 100*time.Millisecond
+	asked := 0
+	songURL = func(id int64, level string) (*netease.Stream, error) {
+		if asked++; asked < 3 {
+			return nil, &url.Error{Op: "Post", URL: "https://interface.music.163.com", Err: context.DeadlineExceeded}
+		}
+		return &netease.Stream{URL: srv.URL, Size: int64(len(b)), Level: "exhigh", Type: "mp3"}, nil
+	}
+
+	ref := decodeAll(t, b)
+	c := NewCache(t.TempDir(), 1<<30)
+	p := &Player{Cache: c}
+	_, s, err := p.open(netease.Track{ID: 1, Duration: int64(len(ref)/2) * 1000 / 44100}, "exhigh")
+	if err != nil {
+		t.Fatalf("gave up after asking %d times: %v", asked, err)
+	}
+	var got []float32
+	buf := make([]float32, 4096)
+	for {
+		n, err := s.Read(buf)
+		got = append(got, buf[:n]...)
+		if err != nil || n == 0 {
+			break
+		}
+	}
+	s.Close()
+	if d := maxDiff(got, ref); len(got) != len(ref) || d != 0 {
+		t.Errorf("played %d of %d samples, off by up to %.4f", len(got), len(ref), d)
+	}
+	if dl, _, ok := c.lookup(1, "exhigh"); !ok {
+		t.Error("not kept whole")
+	} else {
+		dl.Close()
+	}
+}
+
+// A song that cannot play, as one for VIPs, is skipped at once, rather
+// than asked for again.
+func TestUnavailableIsNotRetried(t *testing.T) {
+	defer func(wait time.Duration, ask func(int64, string) (*netease.Stream, error)) {
+		retryWait, songURL = wait, ask
+	}(retryWait, songURL)
+	retryWait = time.Millisecond
+	asked := 0
+	songURL = func(int64, string) (*netease.Stream, error) {
+		asked++
+		return nil, netease.ErrUnavailable
+	}
+	p := &Player{}
+	if _, _, err := p.open(netease.Track{ID: 1}, "exhigh"); err != netease.ErrUnavailable || asked != 1 {
+		t.Errorf("asked %d times, failing with %v", asked, err)
 	}
 }
