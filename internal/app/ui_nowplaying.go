@@ -474,11 +474,14 @@ type linesStyle struct {
 // lit has still to go (lyricGlide). foot, if set, follows the lines.
 func (a *app) timedLines(c *ui.Context, scroll ui.Element, lines []lyrics.Line, pos time.Duration, cur int, lag float32, st linesStyle, foot func()) {
 	pl := a.pl
+	// The space around and between the lines grows and shrinks with
+	// their type.
+	k := a.settings.fontScale(fontLyrics)
 	var active ui.Element
 	scroll.Children(func() {
-		ui.Column(c).Gap(6).Translate(0, -lag).Children(func() {
+		ui.Column(c).Gap(6*k).Translate(0, -lag).Children(func() {
 			for i, l := range lines {
-				line := ui.ButtonBase(c.Key(i)).Column().AlignItems(ui.Start).Padding(10, 12).Radius(12).Gap(6).FocusRing(false).Label(l.Text)
+				line := ui.ButtonBase(c.Key(i)).Column().AlignItems(ui.Start).Padding(10*k, 12).Radius(12).Gap(6 * k).FocusRing(false).Label(l.Text)
 				on := i == cur
 				alpha := float32(0.28)
 				if on {
@@ -501,7 +504,7 @@ func (a *app) timedLines(c *ui.Context, scroll ui.Element, lines []lyrics.Line, 
 				line.Children(func() {
 					// The line fades as a pose, in frames that only paint, rather
 					// than building the view at the display's rate as it does.
-					text := ui.Column(c).AlignItems(ui.Start).Gap(6)
+					text := ui.Column(c).AlignItems(ui.Start).Gap(6 * k)
 					text.AnimatePose(ui.Pose{Fade: 1 - alpha}, ui.Animation{Duration: 380 * time.Millisecond})
 					text.Children(func() {
 						if on && len(l.Words) > 0 {
@@ -520,7 +523,7 @@ func (a *app) timedLines(c *ui.Context, scroll ui.Element, lines []lyrics.Line, 
 							ui.Text(c, l.Text).FontSize(a.fs(fontLyrics, st.size)).FontWeight(st.weight).LineHeight(st.lineHeight).LetterSpacing(-0.4).TextColor(white)
 						}
 						if l.Translation != "" {
-							ui.Text(c, l.Translation).FontSize(a.fs(fontLyrics, 17)).FontWeight(600).TextColor(white.Alpha(0.7))
+							ui.Text(c, l.Translation).FontSize(max(12, a.fs(fontLyrics, 17))).FontWeight(600).TextColor(white.Alpha(0.7))
 						}
 					})
 				})

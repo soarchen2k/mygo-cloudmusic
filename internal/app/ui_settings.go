@@ -224,10 +224,10 @@ func (a *app) settingsView(c *ui.Context) {
 				}
 				row(fp.label, fp.desc, func() {
 					labels := make([]string, len(fontScales))
-					chosen := fontScales[2].label
+					chosen := ""
 					for i, fz := range fontScales {
 						labels[i] = fz.label
-						if float32(fz.scale) == s.fontScale(fp.part) {
+						if float32(fz.scale) == s.fontScale(fp.part) || chosen == "" && fz.scale == 1 {
 							chosen = fz.label
 						}
 					}
