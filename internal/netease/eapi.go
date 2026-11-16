@@ -26,11 +26,9 @@ import (
 // not look like the client's, so the login goes through it, as the
 // NeteaseCloudMusicApi project's does.
 
-const (
-	eapiDomain = "https://interfacepc.music.163.com"
-	eapiKey    = "e82ckenh8dichen8"
-	eapiUA     = "NeteaseMusic 9.0.90/5038 (iPhone; iOS 16.2; zh_CN)"
-)
+const eapiKey = "e82ckenh8dichen8"
+
+var eapiDomain = "https://interfacepc.music.163.com" // a test's server in tests
 
 // The desktop client this app speaks as.
 var eapiClient = map[string]string{
@@ -39,6 +37,13 @@ var eapiClient = map[string]string{
 	"osver":   "Microsoft-Windows-10-Professional-build-19045-64bit",
 	"channel": "netease",
 }
+
+// eapiUA is the desktop client's own User-Agent, of the same version as
+// appver. NetEase checks that the two agree: with an iPhone's User-Agent
+// beside the Windows client's header, it refused about half the requests
+// with -460, 检测到您的网络环境存在风险, and every one without a session.
+var eapiUA = "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) " +
+	"Safari/537.36 Chrome/91.0.4472.164 NeteaseMusicDesktop/" + eapiClient["appver"]
 
 var (
 	deviceOnce sync.Once
