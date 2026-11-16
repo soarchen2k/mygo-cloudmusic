@@ -389,6 +389,12 @@ var ErrUnavailable = errors.New("this song isn't available to stream")
 // ErrUnsupported is a song streamed in a format the player does not play.
 var ErrUnsupported = errors.New("unsupported format")
 
+// ErrRisky is NetEase refusing requests from where they come, code -460:
+// "检测到您的网络环境存在风险". It refuses every song alike, until the
+// network changes or a while has passed, and asking again only makes it
+// look more like abuse.
+var ErrRisky = errors.New("netease: the network is taken for a risk")
+
 // Stream is where a track streams from, and what it is.
 type Stream struct {
 	URL  string `json:"-"`
@@ -434,6 +440,9 @@ func SongURL(id int64, level string) (*Stream, error) {
 	}
 	// NetEase failing the request, as when it asks for fewer, says nothing
 	// of the song: it may well play once asked again.
+	if res.Code == -460 {
+		return nil, fmt.Errorf("%w: song url: code %d", ErrRisky, res.Code)
+	}
 	if res.Code != 0 && res.Code != 200 {
 		return nil, fmt.Errorf("netease: song url: code %d", res.Code)
 	}

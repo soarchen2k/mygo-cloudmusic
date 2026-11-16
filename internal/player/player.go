@@ -632,6 +632,14 @@ func (p *Player) loadSkipping(at, skipped int, play bool, from time.Duration) {
 			p.loading = false
 			if err != nil {
 				log.Printf("play: %s: %v", describe(t, level), err)
+				// NetEase refuses every song from this network: the next
+				// would fail as this one did, so it stays, paused.
+				if errors.Is(err, netease.ErrRisky) {
+					p.err = "网易云检测到网络环境异常，请稍后再试或换个网络"
+					p.playing = false
+					p.sync()
+					return
+				}
 				p.err = err.Error()
 				switch {
 				case !errors.Is(err, netease.ErrUnavailable):
@@ -696,7 +704,8 @@ var (
 // 5xx. It is asked again, retries times, waiting retryWait, then twice as
 // long each time, before the song is taken for one that cannot play, which
 // the queue skips. A song that truly cannot play, as one for VIPs or with
-// no address, is skipped at once.
+// no address, is skipped at once, and NetEase refusing the network, as
+// ErrRisky, is not asked again either.
 var (
 	retries   = 3
 	retryWait = time.Second
@@ -716,7 +725,7 @@ func lasting(err error) bool {
 func streamOf(id int64, level string) (*netease.Stream, error) {
 	for try := 0; ; try++ {
 		info, err := songURL(id, level)
-		if err == nil || lasting(err) || try >= retries {
+		if err == nil || lasting(err) || errors.Is(err, netease.ErrRisky) || try >= retries {
 			return info, err
 		}
 		log.Printf("play: song %d: asking for its url failed, try %d of %d: %v", id, try+1, retries+1, err)

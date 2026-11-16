@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"log"
 	"math"
 	"net/http"
@@ -465,5 +466,51 @@ func TestUnplayableIsLogged(t *testing.T) {
 	}
 	if p.Err() != "这首歌需要 VIP 才能播放" {
 		t.Errorf("the bar says %q", p.Err())
+	}
+}
+
+// NetEase refusing the network (-460) stops on the song, asked once, as
+// every other would be refused too: it used to be asked four times, then
+// the queue skipped on to ask the same of every song, with the bar showing
+// the bare code. Playing again asks once more.
+func TestRiskyNetworkStops(t *testing.T) {
+	defer func(wait time.Duration, ask func(int64, string) (*netease.Stream, error), cover func(string) ([]byte, error), lyr func(int64) (string, string, string, error)) {
+		retryWait, songURL, fetchCover, lyricsOf = wait, ask, cover, lyr
+	}(retryWait, songURL, fetchCover, lyricsOf)
+	retryWait = time.Millisecond
+	asked := 0
+	songURL = func(int64, string) (*netease.Stream, error) {
+		asked++
+		return nil, fmt.Errorf("%w: song url: code -460", netease.ErrRisky)
+	}
+	fetchCover = func(string) ([]byte, error) { return nil, errors.New("offline") }
+	lyricsOf = func(int64) (string, string, string, error) { return "", "", "", errors.New("offline") }
+	log.SetOutput(io.Discard)
+	defer log.SetOutput(os.Stderr)
+
+	ch := make(chan func(), 16)
+	p := New(func(fn func()) { ch <- fn })
+	settle := func() {
+		for deadline := time.After(2 * time.Second); p.Loading(); {
+			select {
+			case fn := <-ch:
+				fn()
+			case <-deadline:
+				t.Fatal("still loading")
+			}
+		}
+	}
+	p.PlayQueue([]netease.Track{{ID: 7}, {ID: 8}}, 0)
+	settle()
+	if asked != 1 || p.Current().ID != 7 || p.Playing() {
+		t.Fatalf("asked %d times, at song %d, playing %v", asked, p.Current().ID, p.Playing())
+	}
+	if !strings.Contains(p.Err(), "网络环境") {
+		t.Errorf("the bar says %q", p.Err())
+	}
+	p.TogglePlay()
+	settle()
+	if asked != 2 || p.Current().ID != 7 {
+		t.Errorf("playing again asked %d times in all, at song %d", asked, p.Current().ID)
 	}
 }
