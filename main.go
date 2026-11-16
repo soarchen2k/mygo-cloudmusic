@@ -7,6 +7,7 @@ import (
 )
 
 func main() {
+	useBundledLibs()
 	if err := app.Run(); err != nil {
 		log.Fatal(err)
 	}

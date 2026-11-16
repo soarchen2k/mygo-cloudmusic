@@ -4,3 +4,4 @@
 mygo_windows_*.syso
 /netease-music-mygo
 /node_modules/
+/resources/linux-amd64/lib/

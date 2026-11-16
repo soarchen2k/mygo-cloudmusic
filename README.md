@@ -24,6 +24,7 @@
 
 ```bash
 go tool mygo dev     # 开发模式运行
+sh scripts/tray-libs.sh  # Linux：取来托盘图标的库，随应用打包，给 SteamOS 这类没有它的系统用
 go tool mygo build   # 打包到 build/
 go test ./...        # 运行测试
 ```
