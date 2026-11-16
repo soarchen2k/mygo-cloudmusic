@@ -47,3 +47,21 @@ func TestLastStretch(t *testing.T) {
 		t.Error("picked up a week-old song")
 	}
 }
+
+// A login whose session could not be kept still picks up the last songs,
+// but quietly. Picking up said where it went on after the login said the
+// session could not be kept, so on SteamOS without a keyring the listener
+// never learned why they were signed out at the next launch.
+func TestPickUpQuietKeepsLoginToast(t *testing.T) {
+	a := newTestApp()
+	a.profile = &netease.Profile{UserID: 7}
+	a.toast = "登录成功，但登录状态无法保存"
+	plays := []netease.Play{{Track: netease.Track{ID: 1, Name: "春日影"}, At: time.Now().Add(-time.Minute), Device: "iphone"}}
+	a.pickUpFrom(7, plays, true)
+	if a.picked.id != 1 {
+		t.Errorf("picked up %d, want 1", a.picked.id)
+	}
+	if a.toast != "登录成功，但登录状态无法保存" {
+		t.Errorf("the toast became %q", a.toast)
+	}
+}

@@ -23,31 +23,42 @@ type pickedUp struct {
 }
 
 // pickUp queues the songs the listener played last, paused, if nothing is
-// in the player.
-func (a *app) pickUp(uid int64) {
+// in the player. Quiet, it says nothing of it: the login has said
+// something that matters more, which its toast would replace.
+func (a *app) pickUp(uid int64, quiet bool) {
 	go func() {
 		plays, err := recentPlays(100)
 		a.post(func() {
-			if err != nil || a.profile == nil || a.profile.UserID != uid || a.pl.Current() != nil {
-				return
+			if err == nil {
+				a.pickUpFrom(uid, plays, quiet)
 			}
-			songs, last, ok := lastStretch(plays, time.Now())
-			if !ok {
-				return
-			}
-			order := make([]int, len(songs))
-			for i := range order {
-				order[i] = i
-			}
-			a.pl.Restore(player.Session{Queue: songs, Order: order, At: len(songs) - 1})
-			a.picked = pickedUp{id: last.Track.ID, heard: heardAt(last, time.Now())}
-			where := "上次"
-			if d := deviceName(last.Device); d != "" {
-				where = "在" + d + "上"
-			}
-			a.toast = "已接上你" + where + "听的《" + last.Track.Name + "》，按空格键继续"
 		})
 	}()
+}
+
+// pickUpFrom queues the last stretch of plays, for pickUp.
+func (a *app) pickUpFrom(uid int64, plays []netease.Play, quiet bool) {
+	if a.profile == nil || a.profile.UserID != uid || a.pl.Current() != nil {
+		return
+	}
+	songs, last, ok := lastStretch(plays, time.Now())
+	if !ok {
+		return
+	}
+	order := make([]int, len(songs))
+	for i := range order {
+		order[i] = i
+	}
+	a.pl.Restore(player.Session{Queue: songs, Order: order, At: len(songs) - 1})
+	a.picked = pickedUp{id: last.Track.ID, heard: heardAt(last, time.Now())}
+	if quiet {
+		return
+	}
+	where := "上次"
+	if d := deviceName(last.Device); d != "" {
+		where = "在" + d + "上"
+	}
+	a.toast = "已接上你" + where + "听的《" + last.Track.Name + "》，按空格键继续"
 }
 
 // lastStretch returns the songs of the listener's last stretch of

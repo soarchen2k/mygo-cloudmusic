@@ -117,11 +117,11 @@ func (a *app) pollLogin(gen int, key string) {
 				case code == netease.QRConfirmed:
 					l.status, l.finished = code, true
 					a.signedIn(prof)
-					if prof != nil {
-						a.pickUp(prof.UserID)
-					}
 					if saveErr != nil {
 						a.toast = "登录成功，但登录状态无法保存"
+					}
+					if prof != nil {
+						a.pickUp(prof.UserID, saveErr != nil)
 					}
 					a.closeLoginSoon(gen)
 				case code == netease.QRExpired || code == netease.QRWaiting || code == netease.QRScanned:
