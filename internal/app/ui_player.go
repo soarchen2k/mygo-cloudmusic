@@ -200,7 +200,7 @@ func (a *app) volumeButton(c *ui.Context, color ui.Color) {
 				QuadTo(cx, foot+arrow, cx+1.2, foot+arrow-1.2).LineTo(cx+arrow+1, foot)
 			p.StrokePath(edge, 0.5, pop.edge)
 		})
-		ui.Textf(c, "%d%%", int(a.volume*100+0.5)).FontSize(11).FontWeight(500).FontFeatures("tnum").TextColor(a.pal.muted)
+		ui.Textf(c, "%d%%", int(a.volume*100+0.5)).FontSize(a.fs(fontPlayer, 11)).FontWeight(500).FontFeatures("tnum").TextColor(a.pal.muted)
 		a.nativeVolumeSlider(c, pop)
 	})
 }
@@ -370,7 +370,7 @@ func (a *app) playerBar(c *ui.Context) {
 					ui.Box(c).Size(48, 48).Radius(8).Background(p.hover).Center().Children(func() {
 						ui.Icon(c, iconNote).Size(18, 18).TextColor(p.faint)
 					})
-					ui.Text(c, "未在播放").FontSize(13).TextColor(p.muted)
+					ui.Text(c, "未在播放").FontSize(a.fs(fontPlayer, 13)).TextColor(p.muted)
 				})
 				return
 			}
@@ -387,7 +387,7 @@ func (a *app) playerBar(c *ui.Context) {
 					}
 				})
 				ui.Column(c).Shrink(1).MinWidth(0).Gap(3).Children(func() {
-					ui.Text(c, tr.Name).FontSize(13.5).FontWeight(600).SingleLine()
+					ui.Text(c, tr.Name).FontSize(a.fs(fontPlayer, 13.5)).FontWeight(600).SingleLine()
 					// What it is waiting on shows in place of the artists.
 					var sub string
 					color := p.muted
@@ -400,9 +400,9 @@ func (a *app) playerBar(c *ui.Context) {
 						sub, color = pl.Err(), p.accent
 					}
 					if sub == "" {
-						a.artistLinks(c, tr, p.muted, p.text).FontSize(12).SingleLine()
+						a.artistLinks(c, tr, p.muted, p.text).FontSize(a.fs(fontPlayer, 12)).SingleLine()
 					} else {
-						ui.Text(c, sub).FontSize(12).TextColor(color).SingleLine()
+						ui.Text(c, sub).FontSize(a.fs(fontPlayer, 12)).TextColor(color).SingleLine()
 					}
 				})
 			})
@@ -416,9 +416,9 @@ func (a *app) playerBar(c *ui.Context) {
 		ui.Column(c).Width(440).Shrink(1).MinWidth(300).Gap(0).AlignItems(ui.Stretch).Children(func() {
 			a.transport(c, p.text, p.muted, p.accent, 18)
 			ui.Row(c).Gap(10).AlignItems(ui.Center).Margin(-4, 0, 0, 0).Children(func() {
-				ui.Text(c, clock(pl.Position())).FontSize(10.5).FontFeatures("tnum").TextColor(p.faint).Width(34).TextAlign(ui.End)
+				ui.Text(c, clock(pl.Position())).FontSize(a.fs(fontPlayer, 10.5)).FontFeatures("tnum").TextColor(p.faint).Width(34).TextAlign(ui.End)
 				a.scrubber(c.Key("bar-scrub"), &a.barScrub, p.press, p.text.Alpha(0.75), 14, p.accent).Grow(1)
-				ui.Text(c, clock(pl.Duration())).FontSize(10.5).FontFeatures("tnum").TextColor(p.faint).Width(34)
+				ui.Text(c, clock(pl.Duration())).FontSize(a.fs(fontPlayer, 10.5)).FontFeatures("tnum").TextColor(p.faint).Width(34)
 			})
 		})
 

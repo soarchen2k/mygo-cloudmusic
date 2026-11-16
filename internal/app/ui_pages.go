@@ -23,14 +23,14 @@ func (a *app) columns(c *ui.Context, min float32) int {
 func (a *app) heading(c *ui.Context, title, sub string) {
 	ui.Column(c).Gap(4).Margin(0, 0, 18, 0).Children(func() {
 		if sub != "" {
-			ui.Text(c, sub).FontSize(12).FontWeight(600).TextColor(a.pal.muted).LetterSpacing(0.4)
+			ui.Text(c, sub).FontSize(a.fs(fontUI, 12)).FontWeight(600).TextColor(a.pal.muted).LetterSpacing(0.4)
 		}
-		ui.Text(c, title).FontSize(30).FontWeight(700).LetterSpacing(-0.6)
+		ui.Text(c, title).FontSize(a.fs(fontUI, 30)).FontWeight(700).LetterSpacing(-0.6)
 	})
 }
 
 func (a *app) section(c *ui.Context, title string) ui.Element {
-	return ui.Text(c, title).FontSize(19).FontWeight(700).LetterSpacing(-0.3).Margin(34, 0, 14, 0)
+	return ui.Text(c, title).FontSize(a.fs(fontUI, 19)).FontWeight(700).LetterSpacing(-0.3).Margin(34, 0, 14, 0)
 }
 
 func (a *app) homePage(c *ui.Context) {
@@ -156,14 +156,14 @@ func (a *app) coverCard(c *ui.Context, name, cover string, playCount float64, su
 				ui.Row(c).Absolute().Top(8).Right(8).Padding(2, 7).Radius(999).Gap(3).AlignItems(ui.Center).
 					Background(ui.RGBA(0, 0, 0, 0.35)).TextColor(ui.RGB(255, 255, 255)).Children(func() {
 					ui.Icon(c, iconHeadset).Size(10, 10)
-					ui.Text(c, plays(playCount)).FontSize(10.5).FontWeight(600)
+					ui.Text(c, plays(playCount)).FontSize(a.fs(fontUI, 10.5)).FontWeight(600)
 				})
 			}
 			a.coverPlayButton(c, hovered, play)
 		})
-		ui.Text(c, name).FontSize(13).FontWeight(500).MaxLines(2).LineHeight(1.35)
+		ui.Text(c, name).FontSize(a.fs(fontUI, 13)).FontWeight(500).MaxLines(2).LineHeight(1.35)
 		if sub != "" {
-			ui.Text(c, sub).FontSize(12).TextColor(p.muted).SingleLine().Margin(-6, 0, 0, 0)
+			ui.Text(c, sub).FontSize(a.fs(fontUI, 12)).TextColor(p.muted).SingleLine().Margin(-6, 0, 0, 0)
 		}
 	})
 	return card.Clicked()
@@ -218,16 +218,16 @@ func (a *app) chartCard(c *ui.Context, pl *netease.Playlist) {
 		})
 		ui.Column(c).Grow(1).Shrink(1).MinWidth(0).Gap(5).Children(func() {
 			ui.Row(c).Gap(6).AlignItems(ui.Baseline).Children(func() {
-				ui.Text(c, pl.Name).FontSize(14).FontWeight(700).SingleLine()
-				ui.Text(c, pl.UpdateFreq).FontSize(11).TextColor(p.faint).SingleLine()
+				ui.Text(c, pl.Name).FontSize(a.fs(fontUI, 14)).FontWeight(700).SingleLine()
+				ui.Text(c, pl.UpdateFreq).FontSize(a.fs(fontUI, 11)).TextColor(p.faint).SingleLine()
 			})
 			for i, line := range pl.Preview {
 				ui.Row(c).Gap(7).Children(func() {
-					ui.Textf(c, "%d", i+1).FontSize(12).FontWeight(700).Width(10).FontFeatures("tnum").TextColor(p.muted)
+					ui.Textf(c, "%d", i+1).FontSize(a.fs(fontUI, 12)).FontWeight(700).Width(10).FontFeatures("tnum").TextColor(p.muted)
 					ui.RichText(c,
 						ui.Span{Text: line.First, Weight: 500},
 						ui.Span{Text: "  " + line.Second, Color: p.muted},
-					).FontSize(12).SingleLine().Shrink(1).MinWidth(0)
+					).FontSize(a.fs(fontUI, 12)).SingleLine().Shrink(1).MinWidth(0)
 				})
 			}
 		})
@@ -263,8 +263,8 @@ func (a *app) playlistHeader(c *ui.Context, pl *netease.Playlist) {
 			if pl.UpdateFreq != "" {
 				kind = "榜单 · " + pl.UpdateFreq
 			}
-			ui.Text(c, kind).FontSize(12).FontWeight(600).TextColor(p.accent)
-			ui.Text(c, pl.Name).FontSize(30).FontWeight(800).LetterSpacing(-0.6).MaxLines(2).LineHeight(1.2)
+			ui.Text(c, kind).FontSize(a.fs(fontUI, 12)).FontWeight(600).TextColor(p.accent)
+			ui.Text(c, pl.Name).FontSize(a.fs(fontUI, 30)).FontWeight(800).LetterSpacing(-0.6).MaxLines(2).LineHeight(1.2)
 			var meta []string
 			if pl.Creator.Nickname != "" {
 				meta = append(meta, pl.Creator.Nickname)
@@ -273,18 +273,18 @@ func (a *app) playlistHeader(c *ui.Context, pl *netease.Playlist) {
 			if pl.PlayCount > 0 {
 				meta = append(meta, plays(pl.PlayCount)+" 次播放")
 			}
-			ui.Text(c, strings.Join(meta, " · ")).FontSize(13).TextColor(p.muted)
+			ui.Text(c, strings.Join(meta, " · ")).FontSize(a.fs(fontUI, 13)).TextColor(p.muted)
 			if d := strings.TrimSpace(pl.Description); d != "" {
-				ui.Text(c, strings.ReplaceAll(d, "\n", " ")).FontSize(12.5).TextColor(p.muted).MaxLines(2).LineHeight(1.45).Margin(2, 0, 0, 0)
+				ui.Text(c, strings.ReplaceAll(d, "\n", " ")).FontSize(a.fs(fontUI, 12.5)).TextColor(p.muted).MaxLines(2).LineHeight(1.45).Margin(2, 0, 0, 0)
 			}
 			ui.Row(c).Gap(10).Margin(10, 0, 0, 0).Children(func() {
-				if pillButton(c.Key("play"), iconPlay, "播放", p.accent, p.onAccent).Clicked() {
+				if a.pillButton(c.Key("play"), iconPlay, "播放", p.accent, p.onAccent).Clicked() {
 					if a.pl.Shuffle() {
 						a.pl.ToggleShuffle()
 					}
 					a.pl.PlayQueue(pl.Tracks, firstPlayable(pl.Tracks))
 				}
-				if pillButton(c.Key("shuffle"), iconShuffle, "随机播放", p.hover.Over(p.bg), p.text).Clicked() {
+				if a.pillButton(c.Key("shuffle"), iconShuffle, "随机播放", p.hover.Over(p.bg), p.text).Clicked() {
 					if !a.pl.Shuffle() {
 						a.pl.ToggleShuffle()
 					}
@@ -305,7 +305,7 @@ func (a *app) playlistHeader(c *ui.Context, pl *netease.Playlist) {
 				switch {
 				case pl.SpecialType != 5:
 				case a.pl.Radio() == heartRadio:
-					if pillButton(c.Key("heart"), iconX, "退出心动模式", p.hover.Over(p.bg), p.text).Clicked() {
+					if a.pillButton(c.Key("heart"), iconX, "退出心动模式", p.hover.Over(p.bg), p.text).Clicked() {
 						a.exitRadio()
 					}
 				default:
@@ -313,7 +313,7 @@ func (a *app) playlistHeader(c *ui.Context, pl *netease.Playlist) {
 					if a.radioStarting == heartRadio {
 						label = "正在开启…"
 					}
-					if pillButton(c.Key("heart"), iconHeartFill, label, p.hover.Over(p.bg), p.text).Clicked() {
+					if a.pillButton(c.Key("heart"), iconHeartFill, label, p.hover.Over(p.bg), p.text).Clicked() {
 						a.startHeartMode()
 					}
 				}
@@ -380,7 +380,7 @@ func (a *app) trackRows(c *ui.Context, tracks []netease.Track, covers bool, head
 				case hovered && tr.Playable():
 					ui.Icon(c, iconPlay).Size(13, 13).TextColor(p.text)
 				default:
-					ui.Textf(c, "%d", i+1).FontSize(13).FontFeatures("tnum").TextColor(p.faint)
+					ui.Textf(c, "%d", i+1).FontSize(a.fs(fontUI, 13)).FontFeatures("tnum").TextColor(p.faint)
 				}
 			})
 			if covers {
@@ -395,19 +395,19 @@ func (a *app) trackRows(c *ui.Context, tracks []netease.Track, covers bool, head
 				if len(tr.Alias) > 0 {
 					spans = append(spans, ui.Span{Text: "（" + tr.Alias[0] + "）", Color: p.faint})
 				}
-				ui.RichText(c, spans...).FontSize(14).SingleLine()
+				ui.RichText(c, spans...).FontSize(a.fs(fontUI, 14)).SingleLine()
 				ui.Row(c).Gap(6).AlignItems(ui.Center).Children(func() {
 					if !tr.Playable() {
-						ui.Text(c, "VIP").FontSize(9).FontWeight(800).TextColor(p.accent).Padding(0, 4).Radius(3).Border(1, p.accent.Alpha(0.6))
+						ui.Text(c, "VIP").FontSize(a.fs(fontUI, 9)).FontWeight(800).TextColor(p.accent).Padding(0, 4).Radius(3).Border(1, p.accent.Alpha(0.6))
 					}
-					a.artistLinks(c, tr, p.muted, p.text).FontSize(12.5).SingleLine().Shrink(1).MinWidth(0)
+					a.artistLinks(c, tr, p.muted, p.text).FontSize(a.fs(fontUI, 12.5)).SingleLine().Shrink(1).MinWidth(0)
 					if tr.Reason != "" {
-						ui.Text(c, tr.Reason).FontSize(10.5).FontWeight(600).TextColor(p.accent).Padding(1, 6).Radius(999).Background(p.accent.Alpha(0.1)).SingleLine()
+						ui.Text(c, tr.Reason).FontSize(a.fs(fontUI, 10.5)).FontWeight(600).TextColor(p.accent).Padding(1, 6).Radius(999).Background(p.accent.Alpha(0.1)).SingleLine()
 					}
 				})
 			})
 			if wide {
-				album := ui.RichText(c).Grow(2).Basis(0).MinWidth(0).FontSize(12.5).TextColor(p.muted).SingleLine()
+				album := ui.RichText(c).Grow(2).Basis(0).MinWidth(0).FontSize(a.fs(fontUI, 12.5)).TextColor(p.muted).SingleLine()
 				album.Children(func() {
 					if tr.Album.ID == 0 {
 						ui.Text(c, tr.Album.Name)
@@ -422,7 +422,7 @@ func (a *app) trackRows(c *ui.Context, tracks []netease.Track, covers bool, head
 					a.likeButton(c.Key("like"), tr, 15, p.muted)
 				}
 			})
-			ui.Text(c, clock(tr.Length())).FontSize(12.5).FontFeatures("tnum").TextColor(p.faint).Width(44).TextAlign(ui.End)
+			ui.Text(c, clock(tr.Length())).FontSize(a.fs(fontUI, 12.5)).FontFeatures("tnum").TextColor(p.faint).Width(44).TextAlign(ui.End)
 		})
 		if row.Clicked() && tr.Playable() {
 			a.pl.PlayQueue(tracks, i)

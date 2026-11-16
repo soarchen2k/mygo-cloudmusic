@@ -182,8 +182,8 @@ func (a *app) loginDialog(c *ui.Context) {
 		case l.status == netease.QRExpired:
 			sub = "二维码已失效"
 		}
-		ui.Text(c, title).FontSize(20).FontWeight(700)
-		ui.Text(c, sub).FontSize(13).TextColor(p.muted).TextAlign(ui.Center).Margin(0, 0, 14, 0)
+		ui.Text(c, title).FontSize(a.fs(fontUI, 20)).FontWeight(700)
+		ui.Text(c, sub).FontSize(a.fs(fontUI, 13)).TextColor(p.muted).TextAlign(ui.Center).Margin(0, 0, 14, 0)
 
 		ui.Box(c).Size(212, 212).Radius(16).Background(ui.RGB(255, 255, 255)).Border(1, p.hairline).Children(func() {
 			if l.code != nil {
@@ -208,16 +208,16 @@ func (a *app) loginDialog(c *ui.Context) {
 						pic.Children(func() { artImage(c, bmp, 36, in) })
 					}
 					if l.scanner != "" {
-						ui.Text(c, l.scanner).FontSize(14).FontWeight(600).TextColor(ui.Hex("#1d1d1f"))
+						ui.Text(c, l.scanner).FontSize(a.fs(fontUI, 14)).FontWeight(600).TextColor(ui.Hex("#1d1d1f"))
 					}
 				case l.status == netease.QRExpired || l.err != "":
-					if pillButton(c.Key("refresh"), iconRepeat, "刷新二维码", p.accent, p.onAccent).Clicked() {
+					if a.pillButton(c.Key("refresh"), iconRepeat, "刷新二维码", p.accent, p.onAccent).Clicked() {
 						a.openLogin()
 					}
 				}
 			})
 		})
-		ui.Text(c, "登录后，每日推荐与歌单将根据你的口味生成").FontSize(11.5).TextColor(p.faint).Margin(16, 0, 0, 0)
+		ui.Text(c, "登录后，每日推荐与歌单将根据你的口味生成").FontSize(a.fs(fontUI, 11.5)).TextColor(p.faint).Margin(16, 0, 0, 0)
 	})
 }
 
@@ -261,7 +261,7 @@ func (a *app) accountRow(c *ui.Context) {
 			ui.Box(c).Size(26, 26).Radius(13).Background(p.press).Center().Children(func() {
 				ui.Icon(c, iconUser).Size(14, 14).TextColor(p.muted)
 			})
-			ui.Text(c, "登录网易云音乐").FontSize(13).FontWeight(500).TextColor(p.muted)
+			ui.Text(c, "登录网易云音乐").FontSize(a.fs(fontUI, 13)).FontWeight(500).TextColor(p.muted)
 		})
 		if b.Clicked() {
 			a.openLogin()
@@ -271,7 +271,7 @@ func (a *app) accountRow(c *ui.Context) {
 	prof := a.profile
 	b.Label(prof.Nickname).Expanded(a.accountOpen).Children(func() {
 		a.avatar(c, prof.AvatarURL, 26, p.press)
-		ui.Text(c, prof.Nickname).FontSize(13).FontWeight(600).SingleLine().Grow(1).Shrink(1).MinWidth(0)
+		ui.Text(c, prof.Nickname).FontSize(a.fs(fontUI, 13)).FontWeight(600).SingleLine().Grow(1).Shrink(1).MinWidth(0)
 		ui.Icon(c, iconUpDown).Size(13, 13).TextColor(p.faint)
 	})
 	if b.Clicked() {
@@ -324,9 +324,9 @@ func (a *app) menuItem(c *ui.Context, icon *ui.SVG, label, shortcut string) ui.E
 	}
 	b.Children(func() {
 		ui.Icon(c, icon).Size(15, 15).TextColor(p.muted)
-		ui.Text(c, label).FontSize(13).Grow(1)
+		ui.Text(c, label).FontSize(a.fs(fontUI, 13)).Grow(1)
 		if shortcut != "" {
-			ui.Text(c, shortcut).FontSize(12).TextColor(p.faint)
+			ui.Text(c, shortcut).FontSize(a.fs(fontUI, 12)).TextColor(p.faint)
 		}
 	})
 	return b
@@ -351,7 +351,7 @@ func (a *app) myPlaylists(c *ui.Context, title string, lists []netease.Playlist,
 			b.Background(p.hover)
 		}
 		b.Children(func() {
-			ui.Text(c, title).FontSize(11.5).FontWeight(600).TextColor(p.faint).Grow(1)
+			ui.Text(c, title).FontSize(a.fs(fontUI, 11.5)).FontWeight(600).TextColor(p.faint).Grow(1)
 			arrow := iconDown
 			if *collapsed {
 				arrow = iconForward
@@ -377,7 +377,7 @@ func (a *app) myPlaylists(c *ui.Context, title string, lists []netease.Playlist,
 		}
 		b.Children(func() {
 			a.cover(c, pl.Cover(), 80, 22, 5)
-			ui.Text(c, pl.Name).FontSize(13).SingleLine().Shrink(1).MinWidth(0)
+			ui.Text(c, pl.Name).FontSize(a.fs(fontUI, 13)).SingleLine().Shrink(1).MinWidth(0)
 		})
 		if mine && pl.SpecialType != 5 {
 			b.ContextMenu(func(m *ui.Menu) {

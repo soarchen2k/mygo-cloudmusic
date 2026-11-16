@@ -114,7 +114,7 @@ func roundButton(c *ui.Context, size float32, color ui.Color, label string) ui.E
 }
 
 // pillButton is a rounded button with an icon and a label.
-func pillButton(c *ui.Context, icon *ui.SVG, label string, bg, fg ui.Color) ui.Element {
+func (a *app) pillButton(c *ui.Context, icon *ui.SVG, label string, bg, fg ui.Color) ui.Element {
 	b := ui.ButtonBase(c).Height(36).PaddingX(18).Gap(8).Radius(999).AlignItems(ui.Center).TextColor(fg)
 	fill := bg
 	if b.Hovered() {
@@ -130,7 +130,7 @@ func pillButton(c *ui.Context, icon *ui.SVG, label string, bg, fg ui.Color) ui.E
 		if icon != nil {
 			ui.Icon(c, icon).Size(14, 14)
 		}
-		ui.Text(c, label).FontSize(14).FontWeight(600).SingleLine()
+		ui.Text(c, label).FontSize(a.fs(fontUI, 14)).FontWeight(600).SingleLine()
 	})
 	return b
 }
@@ -284,12 +284,14 @@ func drawBars(p *ui.Painter, r ui.Rect, st *barState, n int, color ui.Color, min
 // width in a small gray track, divided by hairlines, the one chosen raised
 // on a capsule that slides to the next as it changes. It reports whether
 // the user chose another.
-func segmented(c *ui.Context, selected *int, labels ...string) bool {
+func (a *app) segmented(c *ui.Context, selected *int, labels ...string) bool {
 	t := c.Theme()
-	const height, inset, radius = 24, 2, 6
+	const inset, radius = 2, 6
+	size := a.fs(fontUI, 13)
+	height := max(24, size+11)
 	width := float32(0)
 	for _, l := range labels {
-		w, _ := c.MeasureText(0, ui.Span{Text: l, Size: 13})
+		w, _ := c.MeasureText(0, ui.Span{Text: l, Size: size})
 		width = max(width, w+26)
 	}
 	track, capsule, divider := ui.RGBA(0, 0, 0, 0.06), ui.RGB(255, 255, 255), ui.RGBA(0, 0, 0, 0.13)
@@ -322,7 +324,7 @@ func segmented(c *ui.Context, selected *int, labels ...string) bool {
 			if seg.Pressed() && i != *selected {
 				seg.Background(divider)
 			}
-			seg.Children(func() { ui.Text(c, l).FontSize(13).TextColor(t.Text).SingleLine() })
+			seg.Children(func() { ui.Text(c, l).FontSize(size).TextColor(t.Text).SingleLine() })
 		}
 	})
 	return *selected != before
@@ -344,9 +346,9 @@ func (a *app) pageFoot(c *ui.Context, pg *paged, next func()) {
 	foot.Children(func() {
 		switch {
 		case pg.loading:
-			ui.Text(c, "正在加载…").FontSize(12.5).TextColor(a.pal.muted)
+			ui.Text(c, "正在加载…").FontSize(a.fs(fontUI, 12.5)).TextColor(a.pal.muted)
 		case pg.err != "":
-			ui.Text(c, pg.err).FontSize(12.5).TextColor(a.pal.muted)
+			ui.Text(c, pg.err).FontSize(a.fs(fontUI, 12.5)).TextColor(a.pal.muted)
 			if ui.Button(c.Key("retry"), "重试").Clicked() {
 				next()
 			}

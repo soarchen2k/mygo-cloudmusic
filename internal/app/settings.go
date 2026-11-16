@@ -61,6 +61,9 @@ type settings struct {
 	// CacheMB is how many megabytes the songs kept on disk may take; 0
 	// keeps none.
 	CacheMB int `json:"cacheMB"`
+	// FontScale is how many times larger than usual the text of each part
+	// is (fontParts), by the part's id; a part missing is as usual.
+	FontScale map[string]float64 `json:"fontScale,omitempty"`
 	// SearchHistory keeps submitted keywords, most recent first.
 	SearchHistory []string `json:"searchHistory,omitempty"`
 
@@ -145,15 +148,19 @@ func (s settings) save() error {
 	return os.WriteFile(path, b, 0o600)
 }
 
+// setThemeSource makes the windows light, dark, or follow the system:
+// tests, with no app running, swap it out.
+var setThemeSource = mygo.Theme.SetSource
+
 // applyAppearance makes the windows light, dark, or follow the system.
 func (s settings) applyAppearance() {
 	switch s.Appearance {
 	case "light":
-		mygo.Theme.SetSource(mygo.ThemeLight)
+		setThemeSource(mygo.ThemeLight)
 	case "dark":
-		mygo.Theme.SetSource(mygo.ThemeDark)
+		setThemeSource(mygo.ThemeDark)
 	default:
-		mygo.Theme.SetSource(mygo.ThemeSystem)
+		setThemeSource(mygo.ThemeSystem)
 	}
 }
 

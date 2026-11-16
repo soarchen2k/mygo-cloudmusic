@@ -302,7 +302,7 @@ func (a *app) artistPage(c *ui.Context) {
 			header = func(c *ui.Context) {
 				a.artistHeader(c, d)
 				ui.Column(c).Padding(40, 0).Gap(12).AlignItems(ui.Center).Children(func() {
-					ui.Text(c, d.latestErr).TextColor(a.pal.muted).FontSize(13)
+					ui.Text(c, d.latestErr).TextColor(a.pal.muted).FontSize(a.fs(fontUI, 13))
 					if ui.Button(c.Key("retry"), "重试").Clicked() {
 						a.loadLatest(d.profile.ID)
 					}
@@ -326,7 +326,7 @@ func (a *app) scrollPage(c *ui.Context, content func()) {
 
 // empty says a list has nothing in it.
 func (a *app) empty(c *ui.Context, msg string) {
-	ui.Text(c, msg).FontSize(13).TextColor(a.pal.muted).Padding(40, 0).AlignSelf(ui.Center)
+	ui.Text(c, msg).FontSize(a.fs(fontUI, 13)).TextColor(a.pal.muted).Padding(40, 0).AlignSelf(ui.Center)
 }
 
 // artistPhotoSize is the width of an artist's round photo on their page.
@@ -349,8 +349,8 @@ func (a *app) artistHeader(c *ui.Context, d *artistData) {
 			a.coverFill(c, photo, 600, artistPhotoSize/2)
 		})
 		ui.Column(c).Grow(1).Shrink(1).MinWidth(0).Gap(8).Children(func() {
-			ui.Text(c, "歌手").FontSize(12).FontWeight(600).TextColor(p.accent)
-			ui.Text(c, ar.Name).FontSize(30).FontWeight(800).LetterSpacing(-0.6).MaxLines(2).LineHeight(1.2)
+			ui.Text(c, "歌手").FontSize(a.fs(fontUI, 12)).FontWeight(600).TextColor(p.accent)
+			ui.Text(c, ar.Name).FontSize(a.fs(fontUI, 30)).FontWeight(800).LetterSpacing(-0.6).MaxLines(2).LineHeight(1.2)
 			var meta []string
 			if aka := distinct(append([]string{ar.Trans}, ar.Alias...)); len(aka) > 0 {
 				meta = append(meta, strings.Join(aka, " / "))
@@ -361,18 +361,18 @@ func (a *app) artistHeader(c *ui.Context, d *artistData) {
 			if ar.AlbumSize > 0 {
 				meta = append(meta, fmt.Sprintf("%d 张专辑", ar.AlbumSize))
 			}
-			ui.Text(c, strings.Join(meta, " · ")).FontSize(13).TextColor(p.muted)
+			ui.Text(c, strings.Join(meta, " · ")).FontSize(a.fs(fontUI, 13)).TextColor(p.muted)
 			if d := strings.TrimSpace(ar.BriefDesc); d != "" {
-				ui.Text(c, strings.ReplaceAll(d, "\n", " ")).FontSize(12.5).TextColor(p.muted).MaxLines(2).LineHeight(1.45).Margin(2, 0, 0, 0)
+				ui.Text(c, strings.ReplaceAll(d, "\n", " ")).FontSize(a.fs(fontUI, 12.5)).TextColor(p.muted).MaxLines(2).LineHeight(1.45).Margin(2, 0, 0, 0)
 			}
 			ui.Row(c).Gap(10).Margin(10, 0, 0, 0).Children(func() {
-				if pillButton(c.Key("play"), iconPlay, "播放", p.accent, p.onAccent).Clicked() {
+				if a.pillButton(c.Key("play"), iconPlay, "播放", p.accent, p.onAccent).Clicked() {
 					if a.pl.Shuffle() {
 						a.pl.ToggleShuffle()
 					}
 					a.pl.PlayQueue(songs, firstPlayable(songs))
 				}
-				if pillButton(c.Key("shuffle"), iconShuffle, "随机播放", p.hover.Over(p.bg), p.text).Clicked() {
+				if a.pillButton(c.Key("shuffle"), iconShuffle, "随机播放", p.hover.Over(p.bg), p.text).Clicked() {
 					if !a.pl.Shuffle() {
 						a.pl.ToggleShuffle()
 					}
@@ -382,16 +382,16 @@ func (a *app) artistHeader(c *ui.Context, d *artistData) {
 				if ar.Followed {
 					icon, label = iconCheck, "已关注"
 				}
-				if pillButton(c.Key("follow"), icon, label, p.hover.Over(p.bg), p.text).Clicked() {
+				if a.pillButton(c.Key("follow"), icon, label, p.hover.Over(p.bg), p.text).Clicked() {
 					a.toggleFollow(ar.ID)
 				}
 			})
 		})
 	})
 	ui.Row(c).AlignItems(ui.Center).Margin(34, 0, 14, 0).Children(func() {
-		ui.Text(c, artistTabTitles[a.artistTab]).FontSize(19).FontWeight(700).LetterSpacing(-0.3)
+		ui.Text(c, artistTabTitles[a.artistTab]).FontSize(a.fs(fontUI, 19)).FontWeight(700).LetterSpacing(-0.3)
 		ui.Spacer(c)
-		if segmented(c.Key("tab"), &a.artistTab, "热门", "最新", "专辑", "动态") {
+		if a.segmented(c.Key("tab"), &a.artistTab, "热门", "最新", "专辑", "动态") {
 			a.loadArtist(ar.ID)
 		}
 	})

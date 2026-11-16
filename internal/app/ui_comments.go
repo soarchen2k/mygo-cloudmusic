@@ -117,7 +117,7 @@ const rollLine = 16
 // rollCount shows n as text, each character in a slot of its own, as
 // the wheels of a counter: one that changes rolls out as the next rolls
 // in, upward as n grows and downward as it shrinks, the others staying.
-func rollCount(c *ui.Context, st *rollState, n int, text string, fg ui.Color) {
+func (a *app) rollCount(c *ui.Context, st *rollState, n int, text string, fg ui.Color) {
 	if n != st.n {
 		st.up = n > st.n
 		dir := float32(1)
@@ -149,7 +149,7 @@ func rollCount(c *ui.Context, st *rollState, n int, text string, fg ui.Color) {
 				Exit:  &ui.Motion{Collapse: true},
 			})
 			slot.Children(func() {
-				ui.Text(c.Key(ch), string(ch)).FontSize(13).FontWeight(600).FontFeatures("tnum").TextColor(fg).
+				ui.Text(c.Key(ch), string(ch)).FontSize(a.fs(fontNowPlaying, 13)).FontWeight(600).FontFeatures("tnum").TextColor(fg).
 					Transition(ui.ElementTransition{Animation: &roll, Colors: true, Enter: &ui.Motion{Y: dir * rollLine}, Exit: st.exit})
 			})
 		}
@@ -185,13 +185,13 @@ func (a *app) commentsPane(c *ui.Context, tr *netease.Track) {
 		ui.Column(c).Grow(1).Center().Gap(14).Children(func() {
 			switch {
 			case cs.err != "":
-				ui.Text(c, cs.err).FontSize(15).TextColor(white.Alpha(0.5))
-				if pillButton(c.Key("retry"), iconComment, "重试", white.Alpha(0.14), white).Clicked() {
+				ui.Text(c, cs.err).FontSize(a.fs(fontNowPlaying, 15)).TextColor(white.Alpha(0.5))
+				if a.pillButton(c.Key("retry"), iconComment, "重试", white.Alpha(0.14), white).Clicked() {
 					a.loadComments()
 				}
 			default:
 				ui.Icon(c, iconComment).Size(40, 40).TextColor(white.Alpha(0.3))
-				ui.Text(c, "还没有评论，快来抢沙发").FontSize(17).FontWeight(600).TextColor(white.Alpha(0.45))
+				ui.Text(c, "还没有评论，快来抢沙发").FontSize(a.fs(fontNowPlaying, 17)).FontWeight(600).TextColor(white.Alpha(0.45))
 			}
 		})
 		return
@@ -202,12 +202,12 @@ func (a *app) commentsPane(c *ui.Context, tr *netease.Track) {
 	scroll.Children(func() {
 		ui.Column(c).Gap(2).Children(func() {
 			if len(cs.hot) > 0 {
-				commentHeading(c, "精彩评论")
+				a.commentHeading(c, "精彩评论")
 				for i := range cs.hot {
 					a.commentRow(c.Key(commentKey{true, cs.hot[i].ID}), &cs.hot[i], now)
 				}
 			}
-			commentHeading(c, "最新评论 "+count(cs.total))
+			a.commentHeading(c, "最新评论 "+count(cs.total))
 			for i := range cs.latest {
 				a.commentRow(c.Key(commentKey{false, cs.latest[i].ID}), &cs.latest[i], now)
 			}
@@ -220,13 +220,13 @@ func (a *app) commentsPane(c *ui.Context, tr *netease.Track) {
 				case cs.err != "":
 					retry := ui.ButtonBase(c.Key("retry")).Padding(6, 14).Radius(999).Background(white.Alpha(0.1)).Label("重试")
 					retry.Children(func() {
-						ui.Text(c, "加载失败，点按重试").FontSize(12.5).TextColor(white.Alpha(0.7))
+						ui.Text(c, "加载失败，点按重试").FontSize(a.fs(fontNowPlaying, 12.5)).TextColor(white.Alpha(0.7))
 					})
 					if retry.Clicked() {
 						a.loadComments()
 					}
 				case !cs.more:
-					ui.Text(c, "没有更多评论了").FontSize(12).TextColor(white.Alpha(0.35))
+					ui.Text(c, "没有更多评论了").FontSize(a.fs(fontNowPlaying, 12)).TextColor(white.Alpha(0.35))
 				}
 			})
 			end = ui.Box(c.Key("end")).Height(0).Bounds()
@@ -238,8 +238,8 @@ func (a *app) commentsPane(c *ui.Context, tr *netease.Track) {
 	}
 }
 
-func commentHeading(c *ui.Context, title string) {
-	ui.Text(c, title).FontSize(13).FontWeight(700).TextColor(white.Alpha(0.55)).LetterSpacing(0.2).Padding(18, 12, 6, 12)
+func (a *app) commentHeading(c *ui.Context, title string) {
+	ui.Text(c, title).FontSize(a.fs(fontNowPlaying, 13)).FontWeight(700).TextColor(white.Alpha(0.55)).LetterSpacing(0.2).Padding(18, 12, 6, 12)
 }
 
 // commentRow is a comment: who wrote it, what, and what it replies to,
@@ -249,25 +249,25 @@ func (a *app) commentRow(c *ui.Context, cm *netease.Comment, now time.Time) {
 		a.avatar(c, cm.User.AvatarURL, 34, white.Alpha(0.1))
 		ui.Column(c).Grow(1).Shrink(1).MinWidth(0).Gap(6).Children(func() {
 			ui.Row(c).Gap(8).AlignItems(ui.Center).Children(func() {
-				ui.Text(c, cm.User.Nickname).FontSize(13).FontWeight(600).TextColor(white.Alpha(0.6)).SingleLine().Shrink(1).MinWidth(0)
+				ui.Text(c, cm.User.Nickname).FontSize(a.fs(fontNowPlaying, 13)).FontWeight(600).TextColor(white.Alpha(0.6)).SingleLine().Shrink(1).MinWidth(0)
 				ui.Spacer(c)
 				a.commentLike(c.Key("like"), cm)
 			})
-			ui.Text(c, cm.Content).FontSize(15).LineHeight(1.55).TextColor(white.Alpha(0.92))
+			ui.Text(c, cm.Content).FontSize(a.fs(fontNowPlaying, 15)).LineHeight(1.55).TextColor(white.Alpha(0.92))
 			if len(cm.BeReplied) > 0 {
 				r := cm.BeReplied[0]
 				ui.Box(c).Padding(8, 12).Radius(10).Background(white.Alpha(0.07)).Children(func() {
 					ui.RichText(c,
 						ui.Span{Text: "@" + r.User.Nickname + "：", Color: white.Alpha(0.75), Weight: 600},
 						ui.Span{Text: r.Content, Color: white.Alpha(0.6)},
-					).FontSize(13).LineHeight(1.5).MaxLines(3)
+					).FontSize(a.fs(fontNowPlaying, 13)).LineHeight(1.5).MaxLines(3)
 				})
 			}
 			meta := commentTime(time.UnixMilli(cm.Time), now)
 			if loc := cm.IPLocation.Location; loc != "" {
 				meta += " · " + loc
 			}
-			ui.Text(c, meta).FontSize(11.5).TextColor(white.Alpha(0.38))
+			ui.Text(c, meta).FontSize(a.fs(fontNowPlaying, 11.5)).TextColor(white.Alpha(0.38))
 		})
 	})
 }
@@ -291,7 +291,7 @@ func (a *app) commentLike(c *ui.Context, cm *netease.Comment) {
 		}
 		ui.Icon(c, icon).Size(13, 13)
 		if cm.LikedCount > 0 {
-			ui.Text(c, count(cm.LikedCount)).FontSize(12).FontFeatures("tnum")
+			ui.Text(c, count(cm.LikedCount)).FontSize(a.fs(fontNowPlaying, 12)).FontFeatures("tnum")
 		}
 	})
 	if b.Clicked() {

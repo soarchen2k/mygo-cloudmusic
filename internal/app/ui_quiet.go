@@ -121,7 +121,7 @@ func quietUnder(e ui.Element, dim float32) ui.Element {
 // quietCard shows the hot comment kept, top down the pane, as far in as
 // dim.
 func (a *app) quietCard(c *ui.Context, dim, top float32) {
-	a.hotCard(c, dim, 22, func(card ui.Element) { card.Absolute().Top(top).Left(0).Right(24) })
+	a.hotCard(c, dim, a.fs(fontLyrics, 22), func(card ui.Element) { card.Absolute().Top(top).Left(0).Right(24) })
 }
 
 // stageQuiet shows the hot comment kept in the middle of the stage, w
@@ -131,7 +131,8 @@ func (a *app) stageQuiet(c *ui.Context, dim, f, w float32) {
 		return
 	}
 	ui.Column(c.Key("quiet-stage")).Absolute().Top(0).Left(0).Right(0).Bottom(0).Center().PassThrough().Children(func() {
-		a.hotCard(c, dim, min(34, max(24, f*0.55)), func(card ui.Element) { card.Width(min(760, w*0.6)) })
+		k := a.settings.fontScale(fontLyrics)
+		a.hotCard(c, dim, min(34*k, max(24*k, f*0.55)), func(card ui.Element) { card.Width(min(760, w*0.6)) })
 	})
 }
 
@@ -159,16 +160,16 @@ func (a *app) hotCard(c *ui.Context, dim, size float32, place func(ui.Element)) 
 	card.Children(func() {
 		ui.Row(c).Gap(6).AlignItems(ui.Center).TextColor(white.Alpha(0.5)).Children(func() {
 			ui.Icon(c, iconComment).Size(14, 14)
-			ui.Text(c, "热评").FontSize(12.5).FontWeight(700).LetterSpacing(0.6)
+			ui.Text(c, "热评").FontSize(a.fs(fontLyrics, 12.5)).FontWeight(700).LetterSpacing(0.6)
 		})
 		ui.Text(c, cm.Content).FontSize(size).FontWeight(600).LineHeight(1.5).TextColor(white.Alpha(0.92)).MaxLines(6)
 		ui.Row(c).Gap(8).AlignItems(ui.Center).Children(func() {
 			a.avatar(c, cm.User.AvatarURL, 22, white.Alpha(0.1))
-			ui.Text(c, cm.User.Nickname).FontSize(13).TextColor(white.Alpha(0.6)).SingleLine().Shrink(1).MinWidth(0)
+			ui.Text(c, cm.User.Nickname).FontSize(a.fs(fontLyrics, 13)).TextColor(white.Alpha(0.6)).SingleLine().Shrink(1).MinWidth(0)
 			if cm.LikedCount > 0 {
 				ui.Row(c).Gap(4).AlignItems(ui.Center).Margin(0, 0, 0, 6).TextColor(white.Alpha(0.45)).Children(func() {
 					ui.Icon(c, iconThumb).Size(13, 13)
-					ui.Text(c, count(cm.LikedCount)).FontSize(12).FontFeatures("tnum")
+					ui.Text(c, count(cm.LikedCount)).FontSize(a.fs(fontLyrics, 12)).FontFeatures("tnum")
 				})
 			}
 		})

@@ -198,9 +198,9 @@ func (a *app) podcastPage(c *ui.Context) {
 				if pod.Category != "" {
 					kind += " · " + pod.Category
 				}
-				ui.Text(c, kind).FontSize(12).FontWeight(600).TextColor(p.accent)
-				ui.Text(c, pod.Name).FontSize(30).FontWeight(800).LetterSpacing(-0.6).MaxLines(2).LineHeight(1.2)
-				ui.RichText(c).FontSize(13).TextColor(p.muted).Children(func() {
+				ui.Text(c, kind).FontSize(a.fs(fontUI, 12)).FontWeight(600).TextColor(p.accent)
+				ui.Text(c, pod.Name).FontSize(a.fs(fontUI, 30)).FontWeight(800).LetterSpacing(-0.6).MaxLines(2).LineHeight(1.2)
+				ui.RichText(c).FontSize(a.fs(fontUI, 13)).TextColor(p.muted).Children(func() {
 					if pod.DJ.UserID != 0 {
 						a.link(c.Key("dj"), pod.DJ.Nickname, p.muted, p.text, route{page: pageUser, id: pod.DJ.UserID})
 						ui.Text(c, " · ")
@@ -208,17 +208,17 @@ func (a *app) podcastPage(c *ui.Context) {
 					ui.Text(c, fmt.Sprintf("%d 期 · %s 人订阅", pod.ProgramCount, count(int(pod.SubCount))))
 				})
 				if desc := strings.TrimSpace(pod.Description); desc != "" {
-					ui.Text(c, strings.ReplaceAll(desc, "\n", " ")).FontSize(12.5).TextColor(p.muted).MaxLines(2).LineHeight(1.45).Margin(2, 0, 0, 0)
+					ui.Text(c, strings.ReplaceAll(desc, "\n", " ")).FontSize(a.fs(fontUI, 12.5)).TextColor(p.muted).MaxLines(2).LineHeight(1.45).Margin(2, 0, 0, 0)
 				}
 				ui.Row(c).Gap(10).Margin(10, 0, 0, 0).Children(func() {
-					if pillButton(c.Key("play"), iconPlay, "播放", p.accent, p.onAccent).Clicked() {
+					if a.pillButton(c.Key("play"), iconPlay, "播放", p.accent, p.onAccent).Clicked() {
 						a.playProgram(d, 0)
 					}
 					icon, label := iconPlus, "订阅"
 					if pod.Subed {
 						icon, label = iconCheck, "已订阅"
 					}
-					if pillButton(c.Key("subscribe"), icon, label, p.hover.Over(p.bg), p.text).Clicked() {
+					if a.pillButton(c.Key("subscribe"), icon, label, p.hover.Over(p.bg), p.text).Clicked() {
 						a.toggleSubscribe(d)
 					}
 				})
@@ -255,11 +255,11 @@ func (a *app) programRow(c *ui.Context, d *podcastData, i int, cur *netease.Trac
 		}
 		a.cover(c, cover, 96, 40, 6)
 		ui.Column(c).Grow(1).Shrink(1).MinWidth(0).Gap(3).Children(func() {
-			title := ui.Text(c, pr.Name).FontSize(13.5).FontWeight(500).SingleLine()
+			title := ui.Text(c, pr.Name).FontSize(a.fs(fontUI, 13.5)).FontWeight(500).SingleLine()
 			if playing {
 				title.TextColor(p.accent)
 			}
-			ui.Text(c, time.UnixMilli(pr.CreateTime).Format("2006-01-02")).FontSize(12).TextColor(p.muted)
+			ui.Text(c, time.UnixMilli(pr.CreateTime).Format("2006-01-02")).FontSize(a.fs(fontUI, 12)).TextColor(p.muted)
 		})
 		if playing {
 			a.nowPlayingBars(c)
@@ -271,7 +271,7 @@ func (a *app) programRow(c *ui.Context, d *podcastData, i int, cur *netease.Trac
 				a.likeButton(c.Key("like"), &tr, 15, p.muted)
 			}
 		})
-		ui.Text(c, clock(time.Duration(pr.Duration)*time.Millisecond)).FontSize(12).FontFeatures("tnum").TextColor(p.muted)
+		ui.Text(c, clock(time.Duration(pr.Duration)*time.Millisecond)).FontSize(a.fs(fontUI, 12)).FontFeatures("tnum").TextColor(p.muted)
 	})
 	if row.Clicked() {
 		a.playProgram(d, i)
@@ -288,14 +288,14 @@ func (a *app) podcastRow(c *ui.Context, pod *netease.Podcast) {
 	row.Children(func() {
 		a.cover(c, pod.PicURL, 160, 64, 8)
 		ui.Column(c).Grow(1).Shrink(1).MinWidth(0).Gap(4).Children(func() {
-			ui.Text(c, pod.Name).FontSize(14).FontWeight(600).SingleLine()
+			ui.Text(c, pod.Name).FontSize(a.fs(fontUI, 14)).FontWeight(600).SingleLine()
 			meta := []string{fmt.Sprintf("%d 期", pod.ProgramCount)}
 			if pod.DJ.Nickname != "" {
 				meta = append([]string{pod.DJ.Nickname}, meta...)
 			}
-			ui.Text(c, strings.Join(meta, " · ")).FontSize(12.5).TextColor(p.muted).SingleLine()
+			ui.Text(c, strings.Join(meta, " · ")).FontSize(a.fs(fontUI, 12.5)).TextColor(p.muted).SingleLine()
 			if pod.Description != "" {
-				ui.Text(c, pod.Description).FontSize(12.5).TextColor(p.muted).SingleLine()
+				ui.Text(c, pod.Description).FontSize(a.fs(fontUI, 12.5)).TextColor(p.muted).SingleLine()
 			}
 		})
 	})
@@ -312,7 +312,7 @@ func (a *app) programPane(c *ui.Context, tr *netease.Track) {
 		if desc == "" {
 			desc = "这期节目没有简介"
 		}
-		ui.Text(c, desc).FontSize(15).LineHeight(1.7).TextColor(white.Alpha(0.75))
+		ui.Text(c, desc).FontSize(a.fs(fontNowPlaying, 15)).LineHeight(1.7).TextColor(white.Alpha(0.75))
 	})
 }
 

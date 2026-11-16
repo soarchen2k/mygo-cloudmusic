@@ -451,20 +451,20 @@ func (n *notch) expanded(c *ui.Context, tr *netease.Track, open, left float32) {
 				a.win.Invalidate()
 			}
 			ui.Column(c).Grow(1).MinWidth(0).Gap(4).Children(func() {
-				ui.Text(c, tr.Name).FontSize(15).FontWeight(700).SingleLine()
+				ui.Text(c, tr.Name).FontSize(n.a.fs(fontNotch, 15)).FontWeight(700).SingleLine()
 				if pl.Loading() {
-					ui.Text(c, "正在缓冲…").FontSize(12.5).TextColor(white.Alpha(0.55)).SingleLine()
+					ui.Text(c, "正在缓冲…").FontSize(n.a.fs(fontNotch, 12.5)).TextColor(white.Alpha(0.55)).SingleLine()
 				} else {
-					a.artistLinks(c, tr, white.Alpha(0.55), white).FontSize(12.5).SingleLine()
+					a.artistLinks(c, tr, white.Alpha(0.55), white).FontSize(n.a.fs(fontNotch, 12.5)).SingleLine()
 				}
 			})
 			a.likeButton(c.Key("like"), tr, 17, white.Alpha(0.6))
 			n.levels(c, tr, 26, 22, 5)
 		})
 		ui.Row(c).Gap(10).AlignItems(ui.Center).Children(func() {
-			ui.Text(c, clock(pl.Position())).FontSize(10.5).FontFeatures("tnum").TextColor(white.Alpha(0.5)).Width(30)
+			ui.Text(c, clock(pl.Position())).FontSize(n.a.fs(fontNotch, 10.5)).FontFeatures("tnum").TextColor(white.Alpha(0.5)).Width(30)
 			a.scrubber(c.Key("notch-scrub"), &n.scrub, white.Alpha(0.18), white.Alpha(0.9), 14, ui.Color{}).Grow(1)
-			ui.Text(c, "-"+clock(pl.Duration()-pl.Position())).FontSize(10.5).FontFeatures("tnum").TextColor(white.Alpha(0.5)).Width(34).TextAlign(ui.End)
+			ui.Text(c, "-"+clock(pl.Duration()-pl.Position())).FontSize(n.a.fs(fontNotch, 10.5)).FontFeatures("tnum").TextColor(white.Alpha(0.5)).Width(34).TextAlign(ui.End)
 		})
 		ui.Box(c).Margin(-6, 0, 0, 0).Children(func() {
 			a.transport(c, white, white.Alpha(0.4), white, 20)
@@ -487,11 +487,11 @@ func (n *notch) helloRow(c *ui.Context, shown, left float32) {
 			title, hint = "屏幕顶部也能控制播放", "指针移到顶部中央，即可暂停、切歌"
 		}
 		ui.Column(c).Grow(1).MinWidth(0).Gap(2).Children(func() {
-			ui.Text(c, title).FontSize(13.5).FontWeight(700).SingleLine()
-			ui.Text(c, hint).FontSize(11.5).TextColor(white.Alpha(0.55)).SingleLine()
+			ui.Text(c, title).FontSize(n.a.fs(fontNotch, 13.5)).FontWeight(700).SingleLine()
+			ui.Text(c, hint).FontSize(n.a.fs(fontNotch, 11.5)).TextColor(white.Alpha(0.55)).SingleLine()
 		})
 		b := ui.ButtonBase(c.Key("keep")).Padding(6, 14).Radius(999).Background(a.pal.accent).FocusRing(false).Label("开启刘海播放器")
-		b.Children(func() { ui.Text(c, "开启").FontSize(12.5).FontWeight(600) })
+		b.Children(func() { ui.Text(c, "开启").FontSize(n.a.fs(fontNotch, 12.5)).FontWeight(600) })
 		if b.Clicked() {
 			n.keep()
 		}
@@ -510,11 +510,11 @@ func (n *notch) idle(c *ui.Context, open, left float32) {
 			ui.Icon(c, iconNote).Size(18, 18).TextColor(white)
 		})
 		ui.Column(c).Grow(1).Gap(2).Children(func() {
-			ui.Text(c, mygo.App.Name()).FontSize(14).FontWeight(700)
-			ui.Text(c, "未在播放").FontSize(12).TextColor(white.Alpha(0.5))
+			ui.Text(c, mygo.App.Name()).FontSize(n.a.fs(fontNotch, 14)).FontWeight(700)
+			ui.Text(c, "未在播放").FontSize(n.a.fs(fontNotch, 12)).TextColor(white.Alpha(0.5))
 		})
 		b := ui.ButtonBase(c.Key("open")).Padding(6, 14).Radius(999).Background(white.Alpha(0.14)).FocusRing(false)
-		b.Children(func() { ui.Text(c, "打开").FontSize(12.5).FontWeight(600) })
+		b.Children(func() { ui.Text(c, "打开").FontSize(n.a.fs(fontNotch, 12.5)).FontWeight(600) })
 		if b.Clicked() {
 			a.showMain()
 		}

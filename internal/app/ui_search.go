@@ -194,7 +194,7 @@ func (a *app) searchHeader(c *ui.Context, d *searchData) {
 		for i, k := range searchKinds {
 			labels[i] = k.label
 		}
-		if segmented(c.Key("kind"), &at, labels...) {
+		if a.segmented(c.Key("kind"), &at, labels...) {
 			r.kind = searchKinds[at].kind
 			a.show(r)
 		}
@@ -218,7 +218,7 @@ func (a *app) artistCard(c *ui.Context, ar *netease.ArtistProfile) {
 			art.Shadow(0, 2, 8, -2, p.cardShade)
 		}
 		art.Children(func() { a.coverFill(c, photo, 400, 999) })
-		ui.Text(c, ar.Name).FontSize(13).FontWeight(500).SingleLine().AlignSelf(ui.Center)
+		ui.Text(c, ar.Name).FontSize(a.fs(fontUI, 13)).FontWeight(500).SingleLine().AlignSelf(ui.Center)
 	})
 	if card.Clicked() {
 		a.open(route{page: pageArtist, id: ar.ID})

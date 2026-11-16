@@ -172,8 +172,8 @@ func (a *app) nowPlayingBody(c *ui.Context, tr *netease.Track, art *artwork, acc
 						if r := pl.Radio(); r != "" {
 							a.radioChip(c, r)
 						}
-						ui.Text(c, tr.Name).FontSize(22).FontWeight(700).LetterSpacing(-0.3).SingleLine()
-						a.artistLinks(c, tr, white.Alpha(0.6), white, true).FontSize(15).SingleLine()
+						ui.Text(c, tr.Name).FontSize(a.fs(fontNowPlaying, 22)).FontWeight(700).LetterSpacing(-0.3).SingleLine()
+						a.artistLinks(c, tr, white.Alpha(0.6), white, true).FontSize(a.fs(fontNowPlaying, 15)).SingleLine()
 					})
 					a.likeButton(c.Key("like"), tr, 22, white.Alpha(0.7))
 					a.songMenu(c.Key("more"), tr, 22, white.Alpha(0.7)).Margin(0, -8, 0, 0)
@@ -182,15 +182,15 @@ func (a *app) nowPlayingBody(c *ui.Context, tr *netease.Track, art *artwork, acc
 				// As tall with the quality's badge as without it: the badge goes
 				// while the next song loads, and the column would move with it.
 				ui.Row(c).Height(16).AlignItems(ui.Center).Children(func() {
-					ui.Text(c, clock(pl.Position())).FontSize(11).FontFeatures("tnum").TextColor(white.Alpha(0.5))
+					ui.Text(c, clock(pl.Position())).FontSize(a.fs(fontNowPlaying, 11)).FontFeatures("tnum").TextColor(white.Alpha(0.5))
 					ui.Spacer(c)
-					qualityBadge(c, pl.Stream())
+					a.qualityBadge(c, pl.Stream())
 					ui.Spacer(c)
 					status := "-" + clock(pl.Duration()-pl.Position())
 					if pl.Loading() {
 						status = "正在缓冲…"
 					}
-					ui.Text(c, status).FontSize(11).FontFeatures("tnum").TextColor(white.Alpha(0.5))
+					ui.Text(c, status).FontSize(a.fs(fontNowPlaying, 11)).FontFeatures("tnum").TextColor(white.Alpha(0.5))
 				})
 				ui.Box(c).Margin(14, 0, 18, 0).Children(func() {
 					a.transport(c, white, white.Alpha(0.45), accent, 28)
@@ -340,7 +340,7 @@ func (a *app) radioChip(c *ui.Context, name string) {
 	chip.Background(chip.AnimateColor("bg", bg, ui.Animation{Duration: 120 * time.Millisecond})).TextColor(fg)
 	chip.Children(func() {
 		ui.Icon(c, icon).Size(12, 12)
-		ui.Text(c, radioLabel(name)).FontSize(11.5).FontWeight(700).LetterSpacing(0.3)
+		ui.Text(c, radioLabel(name)).FontSize(a.fs(fontNowPlaying, 11.5)).FontWeight(700).LetterSpacing(0.3)
 		ui.Icon(c, iconX).Size(11, 11).Opacity(cross)
 	})
 	if chip.Clicked() {
@@ -349,7 +349,7 @@ func (a *app) radioChip(c *ui.Context, name string) {
 }
 
 // qualityBadge marks a lossless stream, as it plays.
-func qualityBadge(c *ui.Context, st *netease.Stream) {
+func (a *app) qualityBadge(c *ui.Context, st *netease.Stream) {
 	if st == nil || !netease.Lossless(st.Level) {
 		return
 	}
@@ -357,7 +357,7 @@ func qualityBadge(c *ui.Context, st *netease.Stream) {
 	if st.Level == "hires" {
 		label = "Hi-Res"
 	}
-	ui.Text(c, label).FontSize(9.5).FontWeight(800).LetterSpacing(0.6).TextColor(ui.Hex("#f5d58a")).
+	ui.Text(c, label).FontSize(a.fs(fontNowPlaying, 9.5)).FontWeight(800).LetterSpacing(0.6).TextColor(ui.Hex("#f5d58a")).
 		Padding(1, 6).Radius(4).Border(1, ui.Hex("#f5d58a").Alpha(0.55))
 }
 
@@ -375,15 +375,15 @@ func (a *app) stageBar(c *ui.Context, tr *netease.Track, art *artwork, accent ui
 					cov.Children(func() { artImage(c, bmp, 8, in) })
 				}
 				ui.Column(c).Shrink(1).MinWidth(0).Gap(2).Children(func() {
-					ui.Text(c, tr.Name).FontSize(14).FontWeight(700).SingleLine()
-					a.artistLinks(c, tr, white.Alpha(0.55), white).FontSize(12).SingleLine()
+					ui.Text(c, tr.Name).FontSize(a.fs(fontNowPlaying, 14)).FontWeight(700).SingleLine()
+					a.artistLinks(c, tr, white.Alpha(0.55), white).FontSize(a.fs(fontNowPlaying, 12)).SingleLine()
 				})
 				a.likeButton(c.Key("like"), tr, 17, white.Alpha(0.6))
 				a.songMenu(c.Key("more"), tr, 17, white.Alpha(0.6)).Margin(0, 0, 0, -10)
 			})
 			a.transport(c, white, white.Alpha(0.45), white, 22)
 			ui.Row(c).Grow(1).Basis(0).MinWidth(0).Justify(ui.End).Children(func() {
-				ui.Text(c, clock(pl.Position())+" / "+clock(pl.Duration())).FontSize(11.5).FontFeatures("tnum").TextColor(white.Alpha(0.5))
+				ui.Text(c, clock(pl.Position())+" / "+clock(pl.Duration())).FontSize(a.fs(fontNowPlaying, 11.5)).FontFeatures("tnum").TextColor(white.Alpha(0.5))
 			})
 		})
 	})
@@ -400,7 +400,7 @@ func (a *app) paneTab(c *ui.Context, i int, label string) {
 	b.Background(b.AnimateColor("bg", bg, ui.Animation{Duration: 120 * time.Millisecond}))
 	b.Children(func() {
 		if i != paneComments {
-			ui.Text(c, label).FontSize(13).FontWeight(600).TextColor(fg)
+			ui.Text(c, label).FontSize(a.fs(fontNowPlaying, 13)).FontWeight(600).TextColor(fg)
 			return
 		}
 		// The count rolls as it changes, from one song's to the next.
@@ -408,8 +408,8 @@ func (a *app) paneTab(c *ui.Context, i int, label string) {
 		if n > 0 {
 			text = " " + count(n)
 		}
-		ui.Text(c, "评论").FontSize(13).FontWeight(600).TextColor(fg)
-		rollCount(c, &a.tabCount, n, text, fg)
+		ui.Text(c, "评论").FontSize(a.fs(fontNowPlaying, 13)).FontWeight(600).TextColor(fg)
+		a.rollCount(c, &a.tabCount, n, text, fg)
 	})
 	if b.Clicked() {
 		a.choosePane(i)
@@ -431,7 +431,7 @@ func (a *app) lyricsPane(c *ui.Context, tr *netease.Track, h float32) {
 				lyricsSkeleton(c, npShimmer(c))
 				return
 			}
-			ui.Text(c, "纯音乐，请欣赏").FontSize(24).FontWeight(700).TextColor(white.Alpha(0.4))
+			ui.Text(c, "纯音乐，请欣赏").FontSize(a.fs(fontLyrics, 24)).FontWeight(700).TextColor(white.Alpha(0.4))
 		})
 		a.quietCard(c, dim, h*0.18)
 		return
@@ -506,7 +506,7 @@ func (a *app) timedLines(c *ui.Context, scroll ui.Element, lines []lyrics.Line, 
 					text.Children(func() {
 						if on && len(l.Words) > 0 {
 							// The line sung lights up word by word as it is sung.
-							ui.RichText(c.Key("words")).FontSize(st.size).FontWeight(st.weight).LineHeight(st.lineHeight).LetterSpacing(-0.4).Children(func() {
+							ui.RichText(c.Key("words")).FontSize(a.fs(fontLyrics, st.size)).FontWeight(st.weight).LineHeight(st.lineHeight).LetterSpacing(-0.4).Children(func() {
 								for wi, wd := range l.Words {
 									lit := clamp01(float32((pos - wd.Start).Seconds() / max(0.05, (wd.End-wd.Start).Seconds())))
 									ui.Text(c.Key(wi), wd.Text).TextColor(white.Alpha(0.38 + 0.62*lit))
@@ -517,10 +517,10 @@ func (a *app) timedLines(c *ui.Context, scroll ui.Element, lines []lyrics.Line, 
 								c.After(40 * time.Millisecond)
 							}
 						} else {
-							ui.Text(c, l.Text).FontSize(st.size).FontWeight(st.weight).LineHeight(st.lineHeight).LetterSpacing(-0.4).TextColor(white)
+							ui.Text(c, l.Text).FontSize(a.fs(fontLyrics, st.size)).FontWeight(st.weight).LineHeight(st.lineHeight).LetterSpacing(-0.4).TextColor(white)
 						}
 						if l.Translation != "" {
-							ui.Text(c, l.Translation).FontSize(17).FontWeight(600).TextColor(white.Alpha(0.7))
+							ui.Text(c, l.Translation).FontSize(a.fs(fontLyrics, 17)).FontWeight(600).TextColor(white.Alpha(0.7))
 						}
 					})
 				})
@@ -659,10 +659,10 @@ func (a *app) queuePane(c *ui.Context) {
 		row.Children(func() {
 			a.cover(c, tr.Album.PicURL, 96, 42, 7)
 			ui.Column(c).Grow(1).MinWidth(0).Gap(3).Children(func() {
-				ui.Text(c, tr.Name).FontSize(14).FontWeight(600).SingleLine()
-				a.artistLinks(c, tr, white.Alpha(0.55), white).FontSize(12.5).SingleLine()
+				ui.Text(c, tr.Name).FontSize(a.fs(fontNowPlaying, 14)).FontWeight(600).SingleLine()
+				a.artistLinks(c, tr, white.Alpha(0.55), white).FontSize(a.fs(fontNowPlaying, 12.5)).SingleLine()
 			})
-			ui.Text(c, clock(tr.Length())).FontSize(12).FontFeatures("tnum").TextColor(white.Alpha(0.4))
+			ui.Text(c, clock(tr.Length())).FontSize(a.fs(fontNowPlaying, 12)).FontFeatures("tnum").TextColor(white.Alpha(0.4))
 		})
 		if row.Clicked() && tr.Playable() && !playing {
 			pl.Jump(i)

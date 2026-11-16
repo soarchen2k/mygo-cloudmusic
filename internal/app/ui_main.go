@@ -17,6 +17,8 @@ func (a *app) view(c *ui.Context) {
 	a.pal = paletteFor(&t)
 	p := a.pal
 	t.Accent, t.AccentText = p.accent, p.onAccent
+	// The controls of the kit, their text at the theme's size, follow 界面.
+	t.FontSize = a.fs(fontUI, t.FontSize)
 	t.Selection = p.accent.Alpha(0.3)
 	c.SetTheme(&t)
 
@@ -218,7 +220,7 @@ func (a *app) navItem(c *ui.Context, icon *ui.SVG, label string, r route) {
 	}
 	b.Children(func() {
 		ui.Icon(c, icon).Size(17, 17).TextColor(color)
-		ui.Text(c, label).FontSize(13.5).FontWeight(500).TextColor(p.text)
+		ui.Text(c, label).FontSize(a.fs(fontUI, 13.5)).FontWeight(500).TextColor(p.text)
 	})
 	if b.Clicked() {
 		a.open(r)
@@ -236,8 +238,8 @@ func (a *app) sidebarNowPlaying(c *ui.Context, tr *netease.Track) {
 	card.Children(func() {
 		a.cover(c, tr.Album.PicURL, 96, 40, 6).Shadow(0, 2, 6, 0, p.cardShade)
 		ui.Column(c).Grow(1).Shrink(1).MinWidth(0).Gap(2).Children(func() {
-			ui.Text(c, tr.Name).FontSize(12.5).FontWeight(600).SingleLine()
-			a.artistLinks(c, tr, p.muted, p.text).FontSize(11.5).SingleLine()
+			ui.Text(c, tr.Name).FontSize(a.fs(fontUI, 12.5)).FontWeight(600).SingleLine()
+			a.artistLinks(c, tr, p.muted, p.text).FontSize(a.fs(fontUI, 11.5)).SingleLine()
 		})
 	})
 	if card.Clicked() {
@@ -379,7 +381,7 @@ func (a *app) content(c *ui.Context) {
 func (a *app) centered(c *ui.Context, err string, retry func()) {
 	top, bottom := a.insets(c)
 	ui.Column(c).Grow(1).Padding(top, 0, bottom, 0).Center().Gap(12).Children(func() {
-		ui.Text(c, err).TextColor(a.pal.muted).FontSize(13)
+		ui.Text(c, err).TextColor(a.pal.muted).FontSize(a.fs(fontUI, 13))
 		if retry != nil && ui.Button(c, "重试").Clicked() {
 			retry()
 		}

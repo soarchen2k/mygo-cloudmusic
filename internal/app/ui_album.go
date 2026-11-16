@@ -65,9 +65,9 @@ func (a *app) albumHeader(c *ui.Context, al *netease.AlbumProfile) {
 			a.coverFill(c, al.PicURL, 600, 14)
 		})
 		ui.Column(c).Grow(1).Shrink(1).MinWidth(0).Gap(8).Children(func() {
-			ui.Text(c, "专辑").FontSize(12).FontWeight(600).TextColor(p.accent)
-			ui.Text(c, al.Name).FontSize(30).FontWeight(800).LetterSpacing(-0.6).MaxLines(2).LineHeight(1.2)
-			ui.RichText(c).FontSize(13).TextColor(p.muted).Children(func() {
+			ui.Text(c, "专辑").FontSize(a.fs(fontUI, 12)).FontWeight(600).TextColor(p.accent)
+			ui.Text(c, al.Name).FontSize(a.fs(fontUI, 30)).FontWeight(800).LetterSpacing(-0.6).MaxLines(2).LineHeight(1.2)
+			ui.RichText(c).FontSize(a.fs(fontUI, 13)).TextColor(p.muted).Children(func() {
 				for i, ar := range al.Artists {
 					if i > 0 {
 						ui.Text(c, ", ")
@@ -81,10 +81,10 @@ func (a *app) albumHeader(c *ui.Context, al *netease.AlbumProfile) {
 				ui.Text(c, meta)
 			})
 			if d := strings.TrimSpace(al.Description); d != "" {
-				ui.Text(c, strings.ReplaceAll(d, "\n", " ")).FontSize(12.5).TextColor(p.muted).MaxLines(2).LineHeight(1.45).Margin(2, 0, 0, 0)
+				ui.Text(c, strings.ReplaceAll(d, "\n", " ")).FontSize(a.fs(fontUI, 12.5)).TextColor(p.muted).MaxLines(2).LineHeight(1.45).Margin(2, 0, 0, 0)
 			}
 			ui.Row(c).Gap(10).Margin(10, 0, 0, 0).Children(func() {
-				if pillButton(c.Key("play"), iconPlay, "播放", p.accent, p.onAccent).Clicked() {
+				if a.pillButton(c.Key("play"), iconPlay, "播放", p.accent, p.onAccent).Clicked() {
 					if a.pl.Shuffle() {
 						a.pl.ToggleShuffle()
 					}
@@ -121,7 +121,7 @@ func (a *app) albumCard(c *ui.Context, al *netease.AlbumProfile) {
 		}
 		art.AnimatePose(lift, ui.Snappy)
 		art.Children(func() { a.coverFill(c, al.PicURL, 400, 10) })
-		ui.Text(c, al.Name).FontSize(13).FontWeight(500).MaxLines(2).LineHeight(1.35)
+		ui.Text(c, al.Name).FontSize(a.fs(fontUI, 13)).FontWeight(500).MaxLines(2).LineHeight(1.35)
 		var meta []string
 		if a.route.page != pageArtist {
 			meta = append(meta, al.ArtistNames())
@@ -129,7 +129,7 @@ func (a *app) albumCard(c *ui.Context, al *netease.AlbumProfile) {
 		if al.PublishTime > 0 {
 			meta = append(meta, time.UnixMilli(al.PublishTime).Format("2006"))
 		}
-		ui.Text(c, strings.Join(meta, " · ")).FontSize(12).TextColor(p.muted).SingleLine().Margin(-6, 0, 0, 0)
+		ui.Text(c, strings.Join(meta, " · ")).FontSize(a.fs(fontUI, 12)).TextColor(p.muted).SingleLine().Margin(-6, 0, 0, 0)
 	})
 	if card.Clicked() {
 		a.open(route{page: pageAlbum, id: al.ID})

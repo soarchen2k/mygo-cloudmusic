@@ -41,7 +41,7 @@ func (a *app) stageStyleButton(c *ui.Context) {
 	}
 	b.Background(b.AnimateColor("bg", bg, ui.Animation{Duration: 120 * time.Millisecond}))
 	b.Children(func() {
-		ui.Text(c, label).FontSize(13).FontWeight(600).TextColor(fg)
+		ui.Text(c, label).FontSize(a.fs(fontNowPlaying, 13)).FontWeight(600).TextColor(fg)
 		ui.Icon(c, iconDown).Size(12, 12).TextColor(fg)
 	})
 	b.Menu(func(m *ui.Menu) {
@@ -358,8 +358,8 @@ func splitParts(words []lyrics.Word, units [][2]int, n int) []tiltPart {
 // the accent, its characters up and down by turns. The whole line is at
 // opacity fade, rising a little as it goes; with sparks, each word throws
 // them as it is sung.
-func tiltLine(c *ui.Context, l *lyrics.Line, pos time.Duration, w, fade float32, accent ui.Color, sparks bool) {
-	size := min(w*0.06875, 90)
+func tiltLine(c *ui.Context, l *lyrics.Line, pos time.Duration, w, scale, fade float32, accent ui.Color, sparks bool) {
+	size := min(w*0.06875, 90) * scale
 	avail := w * 0.85
 	style := func(p tiltPart) (weight int, spacing float32) {
 		if p.lean {

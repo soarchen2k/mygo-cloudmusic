@@ -153,11 +153,11 @@ func (a *app) wallSong(c *ui.Context, tr *netease.Track, art *artwork, top, h fl
 				a.radioChip(c, r)
 			}
 			ui.Row(c).Gap(8).AlignItems(ui.Center).Children(func() {
-				ui.Text(c, tr.Name).FontSize(26).FontWeight(800).LetterSpacing(-0.4).SingleLine().Shrink(1).MinWidth(0)
+				ui.Text(c, tr.Name).FontSize(a.fs(fontNowPlaying, 26)).FontWeight(800).LetterSpacing(-0.4).SingleLine().Shrink(1).MinWidth(0)
 				a.likeButton(c.Key("like"), tr, 20, white.Alpha(0.7))
 				a.songMenu(c.Key("more"), tr, 20, white.Alpha(0.7)).Margin(0, -8, 0, 0)
 			})
-			a.artistLinks(c, tr, white.Alpha(0.6), white, true).FontSize(14).SingleLine()
+			a.artistLinks(c, tr, white.Alpha(0.6), white, true).FontSize(a.fs(fontNowPlaying, 14)).SingleLine()
 			lines, _ := pl.Lyrics()
 			if len(lines) == 0 {
 				return
@@ -172,9 +172,9 @@ func (a *app) wallSong(c *ui.Context, tr *netease.Track, art *artwork, top, h fl
 			if cur >= 0 {
 				sung = lines[cur].Text
 			}
-			ui.Text(c, sung).FontSize(17).FontWeight(700).TextColor(white.Alpha(0.85)).MaxLines(2).Margin(14, 0, 0, 0)
+			ui.Text(c, sung).FontSize(a.fs(fontLyrics, 17)).FontWeight(700).TextColor(white.Alpha(0.85)).MaxLines(2).Margin(14, 0, 0, 0)
 			if cur+1 < len(lines) {
-				ui.Text(c, lines[cur+1].Text).FontSize(14).FontWeight(600).TextColor(white.Alpha(0.38)).SingleLine()
+				ui.Text(c, lines[cur+1].Text).FontSize(a.fs(fontLyrics, 14)).FontWeight(600).TextColor(white.Alpha(0.38)).SingleLine()
 			}
 		})
 	})
@@ -347,9 +347,9 @@ func (a *app) wallTile(c *ui.Context, tr *netease.Track, i int, x float32, playi
 				Justify(ui.End).PassThrough().TextColor(white).
 				Gradient(ui.RGBA(0, 0, 0, 0.78), ui.Transparent, 0).
 				Children(func() {
-					ui.Text(c, tr.Name).FontSize(12).FontWeight(700).SingleLine()
+					ui.Text(c, tr.Name).FontSize(a.fs(fontNowPlaying, 12)).FontWeight(700).SingleLine()
 					if names := tr.ArtistNames(); names != "" {
-						ui.Text(c, names).FontSize(10.5).TextColor(white.Alpha(0.7)).SingleLine()
+						ui.Text(c, names).FontSize(a.fs(fontNowPlaying, 10.5)).TextColor(white.Alpha(0.7)).SingleLine()
 					}
 				})
 		}
@@ -367,11 +367,11 @@ func (a *app) wallBar(c *ui.Context, accent ui.Color) {
 		a.scrubber(c.Key("wall-scrub"), &a.npScrub, white.Alpha(0.18), white.Alpha(0.9), 14, accent.Mix(white, 0.35))
 		ui.Row(c).Gap(14).AlignItems(ui.Center).Children(func() {
 			ui.Row(c).Grow(1).Basis(0).MinWidth(0).Children(func() {
-				ui.Text(c, clock(pl.Position())).FontSize(11.5).FontFeatures("tnum").TextColor(white.Alpha(0.5))
+				ui.Text(c, clock(pl.Position())).FontSize(a.fs(fontNowPlaying, 11.5)).FontFeatures("tnum").TextColor(white.Alpha(0.5))
 			})
 			a.transport(c, white, white.Alpha(0.45), white, 22)
 			ui.Row(c).Grow(1).Basis(0).MinWidth(0).Justify(ui.End).Children(func() {
-				ui.Text(c, "-"+clock(pl.Duration()-pl.Position())).FontSize(11.5).FontFeatures("tnum").TextColor(white.Alpha(0.5))
+				ui.Text(c, "-"+clock(pl.Duration()-pl.Position())).FontSize(a.fs(fontNowPlaying, 11.5)).FontFeatures("tnum").TextColor(white.Alpha(0.5))
 			})
 		})
 	})

@@ -103,7 +103,7 @@ func (a *app) searchField(c *ui.Context) {
 		ui.Icon(c, iconSearch).Size(14, 14).TextColor(p.muted)
 		cb := ui.ComboboxBase(c.Key("search"), &a.query)
 		in := cb.Input.Bind(&a.searchBox).Grow(1).MinWidth(0).
-			Placeholder("搜索歌曲、歌手、播客").FontSize(13).Label("搜索")
+			Placeholder("搜索歌曲、歌手、播客").FontSize(a.fs(fontUI, 13)).Label("搜索")
 		q := strings.TrimSpace(a.query)
 		s := &a.suggestions
 		switch {
@@ -131,13 +131,13 @@ func (a *app) searchField(c *ui.Context) {
 			if q == "" {
 				panel.Label("搜索历史")
 				ui.Row(c).Padding(2, 4, 2, 10).AlignItems(ui.Center).Children(func() {
-					ui.Text(c, "搜索历史").FontSize(12).TextColor(p.muted).Grow(1)
+					ui.Text(c, "搜索历史").FontSize(a.fs(fontUI, 12)).TextColor(p.muted).Grow(1)
 					iconButton(c.Key("clear"), iconTrash, 14, p.muted, "清空搜索历史").KeepFocus().OnClick(a.clearSearchHistory)
 				})
 				for _, h := range a.settings.SearchHistory {
 					option("history:"+h, h).Children(func() {
 						ui.Icon(c, iconSearch).Size(13, 13).TextColor(p.muted)
-						ui.Text(c, h).FontSize(13).SingleLine().Shrink(1).MinWidth(0)
+						ui.Text(c, h).FontSize(a.fs(fontUI, 13)).SingleLine().Shrink(1).MinWidth(0)
 					})
 				}
 				return
@@ -146,18 +146,18 @@ func (a *app) searchField(c *ui.Context) {
 			// The query first, which Enter searches as typed.
 			option("query", "搜索“"+q+"”").Children(func() {
 				ui.Icon(c, iconSearch).Size(13, 13).TextColor(p.muted)
-				ui.Text(c, "搜索“"+q+"”").FontSize(13).FontWeight(500).SingleLine().Shrink(1).MinWidth(0)
+				ui.Text(c, "搜索“"+q+"”").FontSize(a.fs(fontUI, 13)).FontWeight(500).SingleLine().Shrink(1).MinWidth(0)
 			})
 			if s.query == q {
 				for _, sg := range s.items {
 					option(sg.key, sg.kind+"："+sg.name).Children(func() {
 						ui.Column(c).Grow(1).Shrink(1).MinWidth(0).Gap(2).Children(func() {
-							ui.Text(c, sg.name).FontSize(13).SingleLine()
+							ui.Text(c, sg.name).FontSize(a.fs(fontUI, 13)).SingleLine()
 							if sg.detail != "" {
-								ui.Text(c, sg.detail).FontSize(11.5).TextColor(p.muted).SingleLine()
+								ui.Text(c, sg.detail).FontSize(a.fs(fontUI, 11.5)).TextColor(p.muted).SingleLine()
 							}
 						})
-						ui.Text(c, sg.kind).FontSize(11.5).TextColor(p.faint)
+						ui.Text(c, sg.kind).FontSize(a.fs(fontUI, 11.5)).TextColor(p.faint)
 					})
 				}
 			}

@@ -95,7 +95,7 @@ func (a *app) stage(c *ui.Context, tr *netease.Track, accent ui.Color) {
 	pl := a.pl
 	lines, loaded := pl.Lyrics()
 	w, h := c.Size()
-	f := min(64, max(36, w*0.045))
+	f := min(64, max(36, w*0.045)) * a.settings.fontScale(fontLyrics)
 	box := ui.Box(c.Key("stage")).Grow(1)
 	// In a quiet part a hot comment takes the middle, the lyrics nearly
 	// gone under it (ui_quiet.go).
@@ -107,7 +107,7 @@ func (a *app) stage(c *ui.Context, tr *netease.Track, accent ui.Color) {
 					stageSkeleton(c, npShimmer(c), f, w)
 					return
 				}
-				ui.Text(c, "纯音乐，请欣赏").FontSize(28).FontWeight(800).TextColor(white.Alpha(0.4))
+				ui.Text(c, "纯音乐，请欣赏").FontSize(a.fs(fontLyrics, 28)).FontWeight(800).TextColor(white.Alpha(0.4))
 			})
 			a.stageQuiet(c, dim, f, w)
 		})
@@ -149,10 +149,10 @@ func (a *app) stage(c *ui.Context, tr *netease.Track, accent ui.Color) {
 			// The translation, and the line coming next, along the foot.
 			ui.Column(c).Absolute().Left(0).Right(0).Bottom(24).AlignItems(ui.Center).Gap(8).PassThrough().Children(func() {
 				if cur >= 0 && lines[cur].Translation != "" {
-					ui.Text(c.Key("translation"), lines[cur].Translation).FontSize(18).FontWeight(600).TextColor(white.Alpha(0.72)).TextAlign(ui.Center)
+					ui.Text(c.Key("translation"), lines[cur].Translation).FontSize(a.fs(fontLyrics, 18)).FontWeight(600).TextColor(white.Alpha(0.72)).TextAlign(ui.Center)
 				}
 				if cur+1 < len(lines) {
-					ui.Text(c.Key("next"), lines[cur+1].Text).FontSize(14).TextColor(white.Alpha(0.32)).TextAlign(ui.Center).SingleLine()
+					ui.Text(c.Key("next"), lines[cur+1].Text).FontSize(a.fs(fontLyrics, 14)).TextColor(white.Alpha(0.32)).TextAlign(ui.Center).SingleLine()
 				}
 			})
 		})
@@ -201,7 +201,7 @@ func (a *app) stageLine(c *ui.Context, l *lyrics.Line, pos time.Duration, f, w, 
 		a.partitaLine(c, l, pos, f, h, fade, accent)
 		return
 	case "tilt":
-		tiltLine(c, l, pos, w, fade, accent, a.settings.StageSparks)
+		tiltLine(c, l, pos, w, a.settings.fontScale(fontLyrics), fade, accent, a.settings.StageSparks)
 		return
 	}
 	seed := float64(l.At / time.Millisecond)

@@ -54,6 +54,8 @@ func (a *app) settingsView(c *ui.Context) {
 	t := *c.Theme()
 	p := paletteFor(&t)
 	t.Accent, t.AccentText = p.accent, p.onAccent
+	// The controls of the kit, their text at the theme's size, follow 界面.
+	t.FontSize = a.fs(fontUI, t.FontSize)
 	c.SetTheme(&t)
 	c.Root().Background(p.sidebar)
 	c.OnShortcut(ui.Cmd, ui.KeyW, func() { a.settingsWin.Close() })
@@ -61,15 +63,15 @@ func (a *app) settingsView(c *ui.Context) {
 
 	ui.Scroll(c).Fill().Padding(24, 28, 32, 28).Gap(8).Children(func() {
 		group := func(title string, rows func()) {
-			ui.Text(c, title).FontSize(12).FontWeight(600).TextColor(p.muted).Margin(14, 4, 4, 4)
+			ui.Text(c, title).FontSize(a.fs(fontUI, 12)).FontWeight(600).TextColor(p.muted).Margin(14, 4, 4, 4)
 			ui.Column(c).Radius(12).Background(p.bg).Border(1, p.hairline).Dividers(1, p.hairline).Children(rows)
 		}
 		row := func(label, desc string, control func()) {
 			ui.Row(c).Padding(12, 16).Gap(16).AlignItems(ui.Center).MinHeight(48).Children(func() {
 				ui.Column(c).Grow(1).Shrink(1).MinWidth(0).Gap(3).Children(func() {
-					ui.Text(c, label).FontSize(13.5).FontWeight(500)
+					ui.Text(c, label).FontSize(a.fs(fontUI, 13.5)).FontWeight(500)
 					if desc != "" {
-						ui.Text(c, desc).FontSize(12).TextColor(p.muted).LineHeight(1.4)
+						ui.Text(c, desc).FontSize(a.fs(fontUI, 12)).TextColor(p.muted).LineHeight(1.4)
 					}
 				})
 				control()
@@ -207,11 +209,46 @@ func (a *app) settingsView(c *ui.Context) {
 						i = k
 					}
 				}
-				if segmented(c.Key("appearance"), &i, "跟随系统", "浅色", "深色") {
+				if a.segmented(c.Key("appearance"), &i, "跟随系统", "浅色", "深色") {
 					s.Appearance = modes[i]
 					a.changed()
 				}
 			})
+		})
+
+		group("字体大小", func() {
+			for _, fp := range fontParts {
+				// The notch player is only on macOS.
+				if fp.part == fontNotch && a.notch == nil {
+					continue
+				}
+				row(fp.label, fp.desc, func() {
+					labels := make([]string, len(fontScales))
+					chosen := fontScales[2].label
+					for i, fz := range fontScales {
+						labels[i] = fz.label
+						if float32(fz.scale) == s.fontScale(fp.part) {
+							chosen = fz.label
+						}
+					}
+					if ui.Select(c.Key("font-"+string(fp.part)), &chosen, labels).Label(fp.label + "字体大小").Width(150).Changed() {
+						for _, fz := range fontScales {
+							if fz.label == chosen {
+								s.setFontScale(fp.part, fz.scale)
+							}
+						}
+						a.changed()
+					}
+				})
+			}
+			if len(s.FontScale) > 0 {
+				row("恢复默认字体大小", "", func() {
+					if ui.Button(c.Key("font-reset"), "恢复默认").Clicked() {
+						s.FontScale = nil
+						a.changed()
+					}
+				})
+			}
 		})
 
 		group("实验性功能", func() {
@@ -242,8 +279,8 @@ func (a *app) settingsView(c *ui.Context) {
 			ui.Row(c).Padding(12, 16).Gap(12).AlignItems(ui.Center).Children(func() {
 				a.avatar(c, prof.AvatarURL, 36, p.press)
 				ui.Column(c).Grow(1).Gap(2).Children(func() {
-					ui.Text(c, prof.Nickname).FontSize(13.5).FontWeight(600)
-					ui.Text(c, "已登录网易云音乐").FontSize(12).TextColor(p.muted)
+					ui.Text(c, prof.Nickname).FontSize(a.fs(fontUI, 13.5)).FontWeight(600)
+					ui.Text(c, "已登录网易云音乐").FontSize(a.fs(fontUI, 12)).TextColor(p.muted)
 				})
 				if ui.Button(c.Key("logout"), "退出登录").Clicked() {
 					a.signOut()
