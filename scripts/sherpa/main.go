@@ -1,12 +1,12 @@
 // Command sherpa packs sherpa-onnx's libraries, which write podcasts'
 // captions on the device, for the app to download with the model: each
-// platform's, signed for macOS with the app's Developer ID so that its
-// hardened runtime loads them, and Silero's voice activity detector, which
-// every platform shares. It writes them, gzipped, into a directory to
+// platform's, and Silero's voice activity detector, which every platform
+// shares. There are none for macOS, which the app isn't built for: its
+// hardened runtime would load them only signed with the app's Developer ID. It writes them, gzipped, into a directory to
 // upload as the assets of the release internal/speech downloads them from,
 // and internal/speech/natives.go, which names them with their digests:
 //
-//	go run ./scripts/sherpa -sign "Developer ID Application: …" -out build/sherpa
+//	go run ./scripts/sherpa -out build/sherpa
 //	gh release create sherpa-onnx-2.0.1 --prerelease --latest=false build/sherpa/*
 //
 // The upstream archives are checked against their digests, and kept in the
@@ -26,7 +26,6 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"os/exec"
 	"path"
 	"path/filepath"
 	"slices"
@@ -40,7 +39,7 @@ const version = "2.0.1"
 // release is the tag of the app's release the files are uploaded to.
 const release = "sherpa-onnx-" + version
 
-const repo = "egoist/mygo-cloudmusic"
+const repo = "soarchen2k/mygo-cloudmusic"
 
 // An archive of sherpa-onnx's release, and the libraries the app takes
 // from it, the C API's first.
@@ -50,10 +49,6 @@ type archive struct {
 }
 
 var archives = map[string]archive{
-	"darwin-arm64": {"osx-arm64-shared-no-tts-lib", "ac5594ad237db56ec4a6c4b3fc48700441b33a07bb71c235f35530a52a93f2e3",
-		[]string{"libsherpa-onnx-c-api.dylib", "libonnxruntime.dylib"}},
-	"darwin-amd64": {"osx-x64-shared-no-tts-lib", "b0107b8166c4131245380bc9b984345c4ea8637c65807f09ca5f501c72926be5",
-		[]string{"libsherpa-onnx-c-api.dylib", "libonnxruntime.dylib"}},
 	"linux-amd64": {"linux-x64-shared-no-tts-lib", "ce437357915491e6f2754b52bec7dcf62ff6fc6aaed9cdcd66f17807bbaef374",
 		[]string{"libsherpa-onnx-c-api.so", "libonnxruntime.so"}},
 	"linux-arm64": {"linux-aarch64-shared-cpu-lib", "15bd737eae467da32ec97e3740a329a535fd21e33caca4f327b0081451d11533",
@@ -73,14 +68,9 @@ const (
 )
 
 func main() {
-	sign := flag.String("sign", "", "the Developer ID that signs the macOS libraries")
 	out := flag.String("out", "build/sherpa", "where to write the files to upload")
 	flag.Parse()
-	if *sign == "" {
-		fmt.Fprintln(os.Stderr, "sherpa: -sign is required: the app's hardened runtime loads no library signed by another team")
-		os.Exit(2)
-	}
-	if err := run(*sign, *out); err != nil {
+	if err := run(*out); err != nil {
 		fmt.Fprintln(os.Stderr, "sherpa:", err)
 		os.Exit(1)
 	}
@@ -93,7 +83,7 @@ type packed struct {
 	sha256, gzSHA256 string
 }
 
-func run(identity, out string) error {
+func run(out string) error {
 	if err := os.RemoveAll(out); err != nil {
 		return err
 	}
@@ -134,14 +124,7 @@ func run(identity, out string) error {
 			return err
 		}
 		for _, name := range a.files {
-			lib := filepath.Join(tmp, name)
-			if strings.HasPrefix(p, "darwin-") {
-				cmd := exec.Command("codesign", "--force", "--sign", identity, "--options", "runtime", "--timestamp", lib)
-				if b, err := cmd.CombinedOutput(); err != nil {
-					return fmt.Errorf("codesign %s/%s: %v\n%s", p, name, err, b)
-				}
-			}
-			b, err := os.ReadFile(lib)
+			b, err := os.ReadFile(filepath.Join(tmp, name))
 			if err != nil {
 				return err
 			}

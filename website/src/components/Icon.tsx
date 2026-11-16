@@ -20,12 +20,12 @@ const paths = {
   monitor: () => <><rect x="2" y="4" width="20" height="13" rx="2" /><path d="M8 21h8M12 17v4" /></>,
   download: () => <path d="M12 3v12M7 10l5 5 5-5M5 21h14" />,
   arrow: () => <path d="M5 12h14M13 6l6 6-6 6" />,
+  mic: () => <><rect x="9" y="2" width="6" height="13" rx="3" /><path d="M19 10v2a7 7 0 0 1-14 0v-2" /><path d="M12 19v3" /></>,
   qr: () => <path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h2v2h-2zM18 14h2M14 18v2M18 18h2v2" />,
   wave: () => <path d="M2 12h2M6 8v8M10 5v14M14 8v8M18 10v4M22 12h-2" />,
   history: () => <path d="M3 12a9 9 0 1 0 3-6.7L3 8M3 3v5h5M12 7v5l3 2" />,
   disk: () => <><ellipse cx="12" cy="5" rx="8" ry="3" /><path d="M4 5v6c0 1.7 3.6 3 8 3s8-1.3 8-3V5M4 11v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6" /></>,
   sparkle: () => <path d="M12 3l1.9 5.6L19.5 10l-5.6 1.9L12 17.5l-1.9-5.6L4.5 10l5.6-1.4zM19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8z" />,
-  notch: () => <><rect x="2" y="4" width="20" height="16" rx="3" /><path d="M9 4v1.5a1.5 1.5 0 0 0 1.5 1.5h3A1.5 1.5 0 0 0 15 5.5V4" /></>,
 } satisfies Record<string, () => JSX.Element>
 
 export type IconName = keyof typeof paths

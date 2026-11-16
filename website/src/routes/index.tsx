@@ -96,9 +96,9 @@ const features: Feature[] = [
     body: '用网易云音乐 App 扫一扫。登录态保存在系统凭据存储中。',
   },
   {
-    icon: 'notch',
-    title: '刘海播放器',
-    body: '在屏幕顶部的刘海处显示迷你播放器，指针移过去就展开。在设置中开启。',
+    icon: 'mic',
+    title: '播客与本机字幕',
+    body: '收听与订阅播客；节目可以在本机转写成字幕，像歌词一样随播放滚动。',
   },
   {
     icon: 'lyrics',

@@ -5,14 +5,12 @@
   "version": "0.1.24",
   "out": "build",
   "updates": {
-    "publicKey": "WzJsOGNIuf6mcEqo5ff8jub+NoQQOEk4JXreLPYjgyQ=",
-    "github": "egoist/mygo-cloudmusic"
+    "publicKey": "eRAgHS6bDvznC8aHcbzMdWBw48HfjZNghTx96TvtNq4=",
+    "github": "soarchen2k/mygo-cloudmusic"
   },
   "macos": {
     "icon": "icon/AppIcon.icon",
-    "minimumSystemVersion": "13.0",
-    "signingIdentity": "Developer ID Application: xinyu zeng (GJE9R5VE87)",
-    "notarize": { "keychainProfile": "notary" }
+    "minimumSystemVersion": "13.0"
   },
   "linux": {
     "comment": "第三方网易云音乐桌面客户端",

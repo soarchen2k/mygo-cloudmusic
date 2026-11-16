@@ -9,7 +9,7 @@ export const Route = createFileRoute('/download')({
   component: Download,
 })
 
-type OS = 'mac' | 'windows' | 'linux'
+type OS = 'windows' | 'linux'
 
 // A download of a platform: the asset of the latest release it is, found by
 // its name, as `mygo build` names installers.
@@ -21,15 +21,6 @@ const has = (...parts: string[]) => (name: string) => {
 }
 
 const platforms: { os: OS; name: string; note: string; builds: Build[] }[] = [
-  {
-    os: 'mac',
-    name: 'macOS',
-    note: 'macOS 13 或更新，已签名并经过 Apple 公证',
-    builds: [
-      { label: 'Apple 芯片', kind: '.dmg', match: has('arm64', '.dmg'), primary: true },
-      { label: 'Intel', kind: '.dmg', match: has('amd64', '.dmg') },
-    ],
-  },
   {
     os: 'windows',
     name: 'Windows',
@@ -61,7 +52,6 @@ const asset = (b: Build) => release.assets.find((a) => b.match(a.name))
 function detectOS(): OS | undefined {
   const ua = navigator.userAgent
   if (/iPhone|iPad|Android/.test(ua)) return undefined
-  if (/Mac/.test(ua)) return 'mac'
   if (/Windows/.test(ua)) return 'windows'
   if (/Linux|X11/.test(ua)) return 'linux'
 }
@@ -130,7 +120,7 @@ function Download() {
         <div class="install">
           <h2>用一行命令安装</h2>
           <p>下载最新版本，装到你的用户目录，以后同样自动更新。</p>
-          <Command label="macOS 与 Linux" text={installSh} />
+          <Command label="Linux" text={installSh} />
           <Command label="Windows PowerShell" text={installPs} />
         </div>
 

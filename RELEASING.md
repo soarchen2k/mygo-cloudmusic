@@ -22,7 +22,7 @@
    gh release delete v0.1.8 --yes
    ```
 
-4. `.github/workflows/release.yml` builds macOS, Windows and Linux and uploads them to a draft release. Wait for every job to pass:
+4. `.github/workflows/release.yml` builds Windows and Linux and uploads them to a draft release. Wait for every job to pass:
 
    ```bash
    gh run watch "$(gh run list --workflow release.yml -L1 --json databaseId -q '.[0].databaseId')" --exit-status
@@ -39,7 +39,7 @@
 6. Check the update feed shows the new version:
 
    ```bash
-   curl -sL https://github.com/egoist/mygo-cloudmusic/releases/latest/download/update-darwin-arm64.json
+   curl -sL https://github.com/soarchen2k/mygo-cloudmusic/releases/latest/download/update-linux-amd64.json
    ```
 
 7. Deploy the website. It reads the latest release when it's prerendered, so it has to be rebuilt after publishing:
@@ -48,13 +48,13 @@
    cd website && bun run deploy
    ```
 
-   Then check https://mygo-cloudmusic.egoist.workers.dev/download/ shows the new version.
+   Then check that the site's /download/ page, at the URL `bun run deploy` prints, shows the new version.
 
 ## The speech recognition libraries
 
-Podcast captions run sherpa-onnx, whose libraries the app downloads with the model from the `sherpa-onnx-<version>` release, not from the app's own. They only change with sherpa-onnx's version, in `scripts/sherpa`. Then pack them again, signing the macOS ones with the app's Developer ID (the app's hardened runtime loads no others), commit the `internal/speech/natives.go` it writes, and upload them as a prerelease, which never becomes the latest that updates look for:
+Podcast captions run sherpa-onnx, whose libraries the app downloads with the model from the `sherpa-onnx-<version>` release, not from the app's own. They only change with sherpa-onnx's version, in `scripts/sherpa`. Then pack them again, commit the `internal/speech/natives.go` it writes, and upload them as a prerelease, which never becomes the latest that updates look for:
 
 ```bash
-go run ./scripts/sherpa -sign "Developer ID Application: xinyu zeng (GJE9R5VE87)"
+go run ./scripts/sherpa
 gh release create sherpa-onnx-2.0.1 --prerelease --latest=false build/sherpa/*
 ```
