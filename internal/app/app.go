@@ -184,6 +184,7 @@ func (a *app) showMain() {
 
 // Run runs the app until it quits.
 func Run() error {
+	// A second launch hands over to the first, which shows its window.
 	if !mygo.App.RequestSingleInstanceLock() {
 		return nil
 	}
