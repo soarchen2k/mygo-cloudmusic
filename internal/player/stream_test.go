@@ -3,6 +3,9 @@ package player
 import (
 	"bytes"
 	"context"
+	"errors"
+	"fmt"
+	"log"
 	"math"
 	"net/http"
 	"net/http/httptest"
@@ -10,6 +13,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -424,5 +428,42 @@ func TestUnavailableIsNotRetried(t *testing.T) {
 	p := &Player{}
 	if _, _, err := p.open(netease.Track{ID: 1}, "exhigh"); err != netease.ErrUnavailable || asked != 1 {
 		t.Errorf("asked %d times, failing with %v", asked, err)
+	}
+}
+
+// A song that cannot play leaves in the log which song it was and why, as
+// the bar only shows it until the queue skips on; and it is still told
+// apart from a network failure, now that the error says why.
+func TestUnplayableIsLogged(t *testing.T) {
+	defer func(ask func(int64, string) (*netease.Stream, error), cover func(string) ([]byte, error), lyr func(int64) (string, string, string, error)) {
+		songURL, fetchCover, lyricsOf = ask, cover, lyr
+	}(songURL, fetchCover, lyricsOf)
+	songURL = func(id int64, _ string) (*netease.Stream, error) {
+		return nil, fmt.Errorf("%w: no url, code 404", netease.ErrUnavailable)
+	}
+	fetchCover = func(string) ([]byte, error) { return nil, errors.New("offline") }
+	lyricsOf = func(int64) (string, string, string, error) { return "", "", "", errors.New("offline") }
+	var out bytes.Buffer
+	log.SetOutput(&out)
+	defer log.SetOutput(os.Stderr)
+
+	ch := make(chan func(), 16)
+	p := New(func(fn func()) { ch <- fn })
+	p.PlayQueue([]netease.Track{{ID: 7, Name: "七"}, {ID: 8, Name: "八"}}, 0)
+	for deadline := time.After(2 * time.Second); p.Loading(); {
+		select {
+		case fn := <-ch:
+			fn()
+		case <-deadline:
+			t.Fatal("still loading")
+		}
+	}
+	for _, want := range []string{`song 7 "七" (exhigh): ` + netease.ErrUnavailable.Error() + ": no url, code 404", `song 8 "八"`} {
+		if !strings.Contains(out.String(), want) {
+			t.Errorf("log lacks %q:\n%s", want, out.String())
+		}
+	}
+	if p.Err() != "这首歌需要 VIP 才能播放" {
+		t.Errorf("the bar says %q", p.Err())
 	}
 }

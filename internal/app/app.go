@@ -203,6 +203,8 @@ func Run() error {
 		cacheUsed:  -1,
 	}
 	moveOldData()
+	// After moving the old data: the logs directory is in the new one.
+	useLogFile()
 	a.useUpdater()
 	mygo.App.WhenReady(func() {
 		a.settings = loadSettings()

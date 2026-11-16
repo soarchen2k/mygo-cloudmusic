@@ -2,6 +2,8 @@ package player
 
 import (
 	"errors"
+	"fmt"
+	"log"
 	"math"
 	"math/rand/v2"
 	"time"
@@ -591,7 +593,7 @@ func (p *Player) loadSkipping(at, skipped int, play bool, from time.Duration) {
 	p.refill()
 
 	go func() {
-		cover, err := netease.Fetch(netease.Sized(t.Album.PicURL, 600))
+		cover, err := fetchCover(netease.Sized(t.Album.PicURL, 600))
 		if err == nil {
 			p.post(func() {
 				if gen == p.gen {
@@ -602,7 +604,7 @@ func (p *Player) loadSkipping(at, skipped int, play bool, from time.Duration) {
 	}()
 
 	go func() {
-		lrc, trans, yrc, err := netease.Lyrics(t.ID)
+		lrc, trans, yrc, err := lyricsOf(t.ID)
 		var lines []lyrics.Line
 		if err == nil {
 			lines = lyrics.Build(lrc, trans, yrc)
@@ -629,9 +631,10 @@ func (p *Player) loadSkipping(at, skipped int, play bool, from time.Duration) {
 			}
 			p.loading = false
 			if err != nil {
+				log.Printf("play: %s: %v", describe(t, level), err)
 				p.err = err.Error()
 				switch {
-				case err != netease.ErrUnavailable:
+				case !errors.Is(err, netease.ErrUnavailable):
 				case t.ProgramID != 0:
 					p.err = "这期节目需要购买才能收听"
 				default:
@@ -680,8 +683,13 @@ func (p *Player) loadSkipping(at, skipped int, play bool, from time.Duration) {
 	}()
 }
 
-// songURL asks NetEase where a track streams from: tests swap it.
-var songURL = netease.SongURL
+// songURL asks NetEase where a track streams from, fetchCover fetches its
+// cover and lyricsOf its lyrics: tests swap them.
+var (
+	songURL    = netease.SongURL
+	fetchCover = netease.Fetch
+	lyricsOf   = netease.Lyrics
+)
 
 // Asking where a song streams from, or fetching it, fails now and then for
 // a moment: a request times out, a connection is reset, a server answers
@@ -711,8 +719,26 @@ func streamOf(id int64, level string) (*netease.Stream, error) {
 		if err == nil || lasting(err) || try >= retries {
 			return info, err
 		}
+		log.Printf("play: song %d: asking for its url failed, try %d of %d: %v", id, try+1, retries+1, err)
 		time.Sleep(backoff(try))
 	}
+}
+
+// origin says where a song's audio came from, for the log.
+func origin(cached bool) string {
+	if cached {
+		return "the cache"
+	}
+	return "the network"
+}
+
+// describe names track t, at level, for the log.
+func describe(t netease.Track, level string) string {
+	kind := "song"
+	if t.ProgramID != 0 {
+		kind = "program"
+	}
+	return fmt.Sprintf("%s %d %q (%s)", kind, t.ID, t.Name, level)
 }
 
 // open opens track t's audio at level: kept in the cache, or else
@@ -730,7 +756,7 @@ func (p *Player) open(t netease.Track, level string) (*netease.Stream, stream, e
 	s, err := openStream(dl, t.Duration)
 	if err != nil {
 		dl.Close()
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("decoding %s from %s: %w", info.Type, origin(ok), err)
 	}
 	return info, s, nil
 }

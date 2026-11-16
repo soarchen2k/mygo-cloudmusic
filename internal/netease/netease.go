@@ -418,6 +418,7 @@ func SongURL(id int64, level string) (*Stream, error) {
 		Code int `json:"code"`
 		Data []struct {
 			Stream
+			Code          int             `json:"code"`
 			URL           string          `json:"url"`
 			Peak          *float64        `json:"peak"`
 			FreeTrialInfo json.RawMessage `json:"freeTrialInfo"`
@@ -436,13 +437,16 @@ func SongURL(id int64, level string) (*Stream, error) {
 	if res.Code != 0 && res.Code != 200 {
 		return nil, fmt.Errorf("netease: song url: code %d", res.Code)
 	}
-	if len(res.Data) == 0 || res.Data[0].URL == "" {
-		return nil, ErrUnavailable
+	if len(res.Data) == 0 {
+		return nil, fmt.Errorf("%w: no data", ErrUnavailable)
 	}
 	d := res.Data[0]
+	if d.URL == "" {
+		return nil, fmt.Errorf("%w: no url, code %d", ErrUnavailable, d.Code)
+	}
 	// A preview of a VIP song is no song.
 	if len(d.FreeTrialInfo) > 0 && string(d.FreeTrialInfo) != "null" {
-		return nil, ErrUnavailable
+		return nil, fmt.Errorf("%w: only a preview", ErrUnavailable)
 	}
 	s := d.Stream
 	s.Type = strings.ToLower(s.Type)

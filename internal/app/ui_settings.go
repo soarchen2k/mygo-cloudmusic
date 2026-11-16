@@ -1,6 +1,7 @@
 package app
 
 import (
+	"log"
 	"runtime"
 	"time"
 
@@ -184,6 +185,18 @@ func (a *app) settingsView(c *ui.Context) {
 				}
 			})
 		})
+
+		if logDir != "" {
+			group("日志", func() {
+				row("运行日志", "记录歌曲播放失败等问题的原因，反馈问题时可以附上", func() {
+					if ui.Button(c.Key("open-logs"), "打开文件夹").Clicked() {
+						if err := mygo.Shell.OpenPath(logDir); err != nil {
+							log.Println("open logs:", err)
+						}
+					}
+				})
+			})
+		}
 
 		group("外观", func() {
 			row("外观", "", func() {

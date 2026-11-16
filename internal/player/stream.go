@@ -7,10 +7,12 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"math"
 	"math/cmplx"
 	"net/http"
 	"os"
+	"strings"
 	"sync"
 	"time"
 
@@ -96,7 +98,11 @@ func (d *download) run(ctx context.Context, url string) {
 		had := d.n
 		var again bool
 		again, err = d.fetch(ctx, url)
-		if err == nil || !again || ctx.Err() != nil {
+		if err == nil || ctx.Err() != nil {
+			break
+		}
+		log.Printf("play: fetching %s failed at %d of %d bytes: %v", withoutQuery(url), d.n, d.size, err)
+		if !again {
 			break
 		}
 		// Bytes came in before it failed: the network works, if not well,
@@ -105,6 +111,7 @@ func (d *download) run(ctx context.Context, url string) {
 			fails = 0
 		}
 		if fails >= retries {
+			log.Printf("play: giving up on %s after %d tries", withoutQuery(url), fails+1)
 			break
 		}
 		select {
@@ -120,6 +127,12 @@ func (d *download) run(ctx context.Context, url string) {
 	d.done, d.err = true, err
 	d.cond.Broadcast()
 	d.mu.Unlock()
+}
+
+// withoutQuery is url without its query, which signs it, for the log.
+func withoutQuery(url string) string {
+	url, _, _ = strings.Cut(url, "?")
+	return url
 }
 
 // fetch fetches the rest of the song from url, from the bytes in so far.
