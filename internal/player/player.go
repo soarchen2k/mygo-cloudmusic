@@ -632,8 +632,8 @@ func (p *Player) loadSkipping(at, skipped int, play bool, from time.Duration) {
 			p.loading = false
 			if err != nil {
 				log.Printf("play: %s: %v", describe(t, level), err)
-				// NetEase refuses every song from this network: the next
-				// would fail as this one did, so it stays, paused.
+				// NetEase still refuses every song from this network: the
+				// next would fail as this one did, so it stays, paused.
 				if errors.Is(err, netease.ErrRisky) {
 					p.err = "网易云检测到网络环境异常，请稍后再试或换个网络"
 					p.playing = false
@@ -704,11 +704,14 @@ var (
 // 5xx. It is asked again, retries times, waiting retryWait, then twice as
 // long each time, before the song is taken for one that cannot play, which
 // the queue skips. A song that truly cannot play, as one for VIPs or with
-// no address, is skipped at once, and NetEase refusing the network, as
-// ErrRisky, is not asked again either.
+// no address, is skipped at once. NetEase refusing the network, as
+// ErrRisky, often lets the song through a few tries later, so it is asked
+// again riskyRetries times, waiting riskyWait each time, some 10 s in all.
 var (
-	retries   = 3
-	retryWait = time.Second
+	retries      = 3
+	retryWait    = time.Second
+	riskyRetries = 5
+	riskyWait    = 2 * time.Second
 )
 
 // backoff is how long to wait before trying again after try failures.
@@ -725,11 +728,15 @@ func lasting(err error) bool {
 func streamOf(id int64, level string) (*netease.Stream, error) {
 	for try := 0; ; try++ {
 		info, err := songURL(id, level)
-		if err == nil || lasting(err) || errors.Is(err, netease.ErrRisky) || try >= retries {
+		limit, wait := retries, backoff(try)
+		if errors.Is(err, netease.ErrRisky) {
+			limit, wait = riskyRetries, riskyWait
+		}
+		if err == nil || lasting(err) || try >= limit {
 			return info, err
 		}
-		log.Printf("play: song %d: asking for its url failed, try %d of %d: %v", id, try+1, retries+1, err)
-		time.Sleep(backoff(try))
+		log.Printf("play: song %d: asking for its url failed, try %d of %d: %v", id, try+1, limit+1, err)
+		time.Sleep(wait)
 	}
 }
 

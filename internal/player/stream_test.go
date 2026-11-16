@@ -469,15 +469,16 @@ func TestUnplayableIsLogged(t *testing.T) {
 	}
 }
 
-// NetEase refusing the network (-460) stops on the song, asked once, as
-// every other would be refused too: it used to be asked four times, then
-// the queue skipped on to ask the same of every song, with the bar showing
-// the bare code. Playing again asks once more.
+// NetEase refusing the network (-460) is asked again riskyRetries times,
+// as it often lets the song through a few tries later, then stops on the
+// song, as every other would be refused too: the queue used to skip on to
+// ask the same of every song, with the bar showing the bare code. Playing
+// again asks as many times once more.
 func TestRiskyNetworkStops(t *testing.T) {
 	defer func(wait time.Duration, ask func(int64, string) (*netease.Stream, error), cover func(string) ([]byte, error), lyr func(int64) (string, string, string, error)) {
-		retryWait, songURL, fetchCover, lyricsOf = wait, ask, cover, lyr
-	}(retryWait, songURL, fetchCover, lyricsOf)
-	retryWait = time.Millisecond
+		riskyWait, songURL, fetchCover, lyricsOf = wait, ask, cover, lyr
+	}(riskyWait, songURL, fetchCover, lyricsOf)
+	riskyWait = time.Millisecond
 	asked := 0
 	songURL = func(int64, string) (*netease.Stream, error) {
 		asked++
@@ -502,7 +503,8 @@ func TestRiskyNetworkStops(t *testing.T) {
 	}
 	p.PlayQueue([]netease.Track{{ID: 7}, {ID: 8}}, 0)
 	settle()
-	if asked != 1 || p.Current().ID != 7 || p.Playing() {
+	tries := riskyRetries + 1
+	if asked != tries || p.Current().ID != 7 || p.Playing() {
 		t.Fatalf("asked %d times, at song %d, playing %v", asked, p.Current().ID, p.Playing())
 	}
 	if !strings.Contains(p.Err(), "网络环境") {
@@ -510,7 +512,7 @@ func TestRiskyNetworkStops(t *testing.T) {
 	}
 	p.TogglePlay()
 	settle()
-	if asked != 2 || p.Current().ID != 7 {
+	if asked != 2*tries || p.Current().ID != 7 {
 		t.Errorf("playing again asked %d times in all, at song %d", asked, p.Current().ID)
 	}
 }
